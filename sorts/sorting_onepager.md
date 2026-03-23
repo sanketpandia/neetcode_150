@@ -59,6 +59,7 @@ func insertionSort(nums []int) {
 ```
 
 This is what you used in q5 (`mapInsSort`). The inner loop shifts elements right to make room.
+Elements before the first index in the array are always sorted. 
 
 ---
 
