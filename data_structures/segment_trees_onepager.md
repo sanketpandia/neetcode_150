@@ -13,8 +13,8 @@
 
 | Feature | Segment Tree | Fenwick Tree (BIT) |
 |---------|--------------|-------------------|
-| Query types | Sum, min, max, GCD, any associative operation | Prefix sums (and range sum derived from two prefix sums) |
-| Implementation complexity | Complex (tree structure, recursive) | Simple (array with bit manipulation) |
+| Query types | Sum, min, max, GCD, any associative operation | Prefix sums (range sum derived from two prefix sums) |
+| Implementation complexity | Complex (recursive tree) | Simple (array + bit manipulation) |
 | Space | O(4n) | O(n) |
 | Constants | Higher | Lower (faster in practice) |
 | Use case | General range queries | Range sum / prefix sum specifically |
@@ -23,9 +23,8 @@
 - **Prefix sum array:** Static array, no updates, O(1) queries
 - **Segment tree:** Dynamic updates + range min/max/sum/GCD queries
 - **Fenwick tree:** Dynamic updates + range sum queries (simpler than segment tree)
-- **Sparse table:** Static array, O(1) range min/max queries (RMQ), O(n log n) build
 
-For **NeetCode 150**, segment trees and Fenwick trees rarely appear. They're more common in competitive programming and advanced LeetCode Hard problems. **Understand the concept and complexity; don't memorize implementation details unless explicitly needed.**
+For **NeetCode 150**, these rarely appear. **Understand the concept and complexity; don't memorize details unless explicitly needed.**
 
 ---
 
@@ -33,14 +32,10 @@ For **NeetCode 150**, segment trees and Fenwick trees rarely appear. They're mor
 
 | Operation | Prefix Sum | Segment Tree | Fenwick Tree |
 |-----------|-----------|--------------|--------------|
-| Build | O(n) | O(n) | O(n log n) or O(n) with optimization |
+| Build | O(n) | O(n) | O(n log n) or O(n) |
 | Point update | O(n) rebuild | O(log n) | O(log n) |
 | Range query | O(1) | O(log n) | O(log n) |
-| Space | O(n) | O(4n) ≈ O(n) | O(n) |
-
-**Space Explanation:**
-- Segment tree: Full binary tree with n leaves requires up to 4n nodes (safe upper bound)
-- Fenwick tree: Same size as input array
+| Space | O(n) | O(4n) | O(n) |
 
 ---
 
@@ -48,48 +43,46 @@ For **NeetCode 150**, segment trees and Fenwick trees rarely appear. They're mor
 
 ### 1. Fenwick Tree (Binary Indexed Tree)
 
-Simpler to implement, supports prefix sum and range sum queries.
+Simpler to implement, supports prefix sum and range sum queries. 1-indexed.
 
-```go
-type BIT struct {
-    tree []int
-    n    int
-}
+```java
+class BIT {
+    int[] tree;
+    int n;
 
-func NewBIT(n int) *BIT {
-    return &BIT{
-        tree: make([]int, n+1),  // 1-indexed
-        n:    n,
+    BIT(int n) {
+        this.n = n;
+        tree = new int[n + 1];  // 1-indexed
     }
-}
 
-// Update: Add delta to index i (1-indexed)
-func (b *BIT) Update(i, delta int) {
-    for ; i <= b.n; i += i & (-i) {  // move to next responsible index
-        b.tree[i] += delta
+    // Add delta to index i (1-indexed)
+    void update(int i, int delta) {
+        for (; i <= n; i += i & (-i)) {
+            tree[i] += delta;
+        }
     }
-}
 
-// Query: Get prefix sum from 1 to i (1-indexed)
-func (b *BIT) Query(i int) int {
-    sum := 0
-    for ; i > 0; i -= i & (-i) {  // move to parent
-        sum += b.tree[i]
+    // Get prefix sum from 1 to i (1-indexed)
+    int query(int i) {
+        int sum = 0;
+        for (; i > 0; i -= i & (-i)) {
+            sum += tree[i];
+        }
+        return sum;
     }
-    return sum
-}
 
-// RangeQuery: Get sum from L to R (1-indexed, inclusive)
-func (b *BIT) RangeQuery(L, R int) int {
-    return b.Query(R) - b.Query(L-1)
+    // Get sum from L to R (1-indexed, inclusive)
+    int rangeQuery(int l, int r) {
+        return query(r) - query(l - 1);
+    }
 }
 ```
 
 **How It Works:**
-- Each index i is responsible for a range of size (i & -i) -- the lowest set bit
-- Update: Propagate change up to parent indices
-- Query: Accumulate sum from parent indices
-- The bit manipulation `i & (-i)` extracts the lowest set bit
+- Each index `i` is responsible for a range of size `(i & -i)` -- the lowest set bit
+- `update`: Propagate change up to parent indices
+- `query`: Accumulate sum from parent indices
+- Bit trick `i & (-i)` extracts the lowest set bit
 
 **Example:** Index 12 (binary 1100) is responsible for range [9, 12] (size 4 = 0100).
 
@@ -97,94 +90,64 @@ func (b *BIT) RangeQuery(L, R int) int {
 
 More flexible but more complex. Supports min, max, sum, GCD, etc.
 
-```go
-type SegmentTree struct {
-    tree []int
-    n    int
-}
+```java
+class SegmentTree {
+    int[] tree;
+    int n;
 
-func NewSegmentTree(arr []int) *SegmentTree {
-    n := len(arr)
-    tree := make([]int, 4*n)  // safe upper bound
-    st := &SegmentTree{tree: tree, n: n}
-    st.build(arr, 0, 0, n-1)
-    return st
-}
-
-// Build tree from array (node, range [L, R])
-func (st *SegmentTree) build(arr []int, node, L, R int) {
-    if L == R {
-        st.tree[node] = arr[L]  // leaf node
-        return
+    SegmentTree(int[] arr) {
+        n = arr.length;
+        tree = new int[4 * n];  // safe upper bound
+        build(arr, 0, 0, n - 1);
     }
-    mid := (L + R) / 2
-    leftChild := 2*node + 1
-    rightChild := 2*node + 2
-    st.build(arr, leftChild, L, mid)
-    st.build(arr, rightChild, mid+1, R)
-    st.tree[node] = st.tree[leftChild] + st.tree[rightChild]  // combine
-}
 
-// Update element at index idx to value val
-func (st *SegmentTree) Update(idx, val int) {
-    st.updateHelper(0, 0, st.n-1, idx, val)
-}
+    void build(int[] arr, int node, int l, int r) {
+        if (l == r) { tree[node] = arr[l]; return; }
+        int mid = (l + r) / 2;
+        build(arr, 2 * node + 1, l, mid);
+        build(arr, 2 * node + 2, mid + 1, r);
+        tree[node] = tree[2 * node + 1] + tree[2 * node + 2];
+    }
 
-func (st *SegmentTree) updateHelper(node, L, R, idx, val int) {
-    if L == R {
-        st.tree[node] = val
-        return
+    void update(int idx, int val) {
+        update(0, 0, n - 1, idx, val);
     }
-    mid := (L + R) / 2
-    leftChild := 2*node + 1
-    rightChild := 2*node + 2
-    if idx <= mid {
-        st.updateHelper(leftChild, L, mid, idx, val)
-    } else {
-        st.updateHelper(rightChild, mid+1, R, idx, val)
-    }
-    st.tree[node] = st.tree[leftChild] + st.tree[rightChild]
-}
 
-// Query sum in range [qL, qR]
-func (st *SegmentTree) Query(qL, qR int) int {
-    return st.queryHelper(0, 0, st.n-1, qL, qR)
-}
+    void update(int node, int l, int r, int idx, int val) {
+        if (l == r) { tree[node] = val; return; }
+        int mid = (l + r) / 2;
+        if (idx <= mid) update(2 * node + 1, l, mid, idx, val);
+        else            update(2 * node + 2, mid + 1, r, idx, val);
+        tree[node] = tree[2 * node + 1] + tree[2 * node + 2];
+    }
 
-func (st *SegmentTree) queryHelper(node, L, R, qL, qR int) int {
-    if qL > R || qR < L {
-        return 0  // no overlap
+    int query(int ql, int qr) {
+        return query(0, 0, n - 1, ql, qr);
     }
-    if qL <= L && R <= qR {
-        return st.tree[node]  // total overlap
+
+    int query(int node, int l, int r, int ql, int qr) {
+        if (ql > r || qr < l) return 0;           // no overlap
+        if (ql <= l && r <= qr) return tree[node]; // total overlap
+        int mid = (l + r) / 2;
+        return query(2 * node + 1, l, mid, ql, qr)
+             + query(2 * node + 2, mid + 1, r, ql, qr);
     }
-    mid := (L + R) / 2
-    leftChild := 2*node + 1
-    rightChild := 2*node + 2
-    leftSum := st.queryHelper(leftChild, L, mid, qL, qR)
-    rightSum := st.queryHelper(rightChild, mid+1, R, qL, qR)
-    return leftSum + rightSum
 }
 ```
 
-### 3. Range Update with Lazy Propagation (Advanced)
+### 3. Usage Example
 
-For efficiency when doing range updates (e.g., "add x to all elements in range [L, R]").
+```java
+// LeetCode 307: Range Sum Query - Mutable
+SegmentTree st = new SegmentTree(new int[]{1, 3, 5, 7, 9});
+st.query(0, 2);     // 9 (1 + 3 + 5)
+st.update(1, 2);    // change index 1 to 2
+st.query(0, 2);     // 8 (1 + 2 + 5)
 
-```go
-// Conceptual -- full implementation is lengthy
-type LazySegmentTree struct {
-    tree []int
-    lazy []int  // pending updates not yet propagated
-    n    int
-}
-
-// Key idea: Mark lazy[node] with pending update
-// Only propagate when needed (on query or further update)
-// This makes range updates O(log n) instead of O(n)
+BIT bit = new BIT(5);
+bit.update(1, 1); bit.update(2, 3); bit.update(3, 5);  // 1-indexed
+bit.rangeQuery(1, 3);  // 9
 ```
-
-**Lazy Propagation:** Postpone updates to children until necessary. Reduces range update from O(n) to O(log n).
 
 ---
 
@@ -197,49 +160,38 @@ type LazySegmentTree struct {
 | Dynamic updates + range min/max/GCD | Segment tree |
 | Static array, range min/max | Sparse table (O(1) query) |
 | Range updates + range queries | Segment tree with lazy propagation |
-| 2D range queries | 2D BIT or 2D segment tree |
-
-**For NeetCode 150:** Most problems don't require these. If you see "range sum with updates", consider Fenwick tree. If you see "range min/max with updates", consider segment tree. Otherwise, simpler structures suffice.
 
 ---
 
 ## Common Pitfalls
 
-1. **Using segment tree when prefix sum suffices.** If there are no updates, prefix sum is simpler and faster.
+1. **Using segment tree when prefix sum suffices.** If there are no updates, prefix sum is simpler and O(1) per query.
 
-2. **Off-by-one in Fenwick tree indexing.** BIT is 1-indexed. Adjust input indices accordingly.
+2. **Off-by-one in Fenwick tree indexing.** BIT is 1-indexed. Adjust input indices by +1 when building.
 
 3. **Incorrect tree size for segment tree.** Use `4*n` as a safe upper bound. The exact size depends on tree height, but 4n is always sufficient.
 
-4. **Forgetting to update parent nodes.** When updating a leaf in segment tree, propagate changes up to the root.
+4. **Forgetting to update parent nodes.** When updating a leaf in segment tree, the recursive implementation propagates up automatically -- but in iterative versions, be careful.
 
-5. **Wrong combine operation.** For sum queries, combine with `+`. For min queries, use `min()`. For max, use `max()`. For GCD, use `gcd()`.
-
-6. **Not handling 0-indexed vs 1-indexed.** Be consistent throughout the implementation.
-
-7. **Overusing these structures.** They're powerful but complex. Only use when simpler alternatives don't work.
+5. **Wrong combine operation.** For sum queries, combine with `+`. For min, use `Math.min`. For max, use `Math.max`.
 
 ---
 
 ## Interview Relevance
 
-Segment trees and Fenwick trees are **rare in NeetCode 150** and standard interviews. They appear in:
-- Competitive programming contests
-- Advanced LeetCode Hard problems
-- System design discussions (e.g., distributed range query systems)
+Segment trees and Fenwick trees are **rare in NeetCode 150** and standard interviews. They appear more in competitive programming.
 
 **What to Know:**
 - **Conceptual understanding:** What problem they solve, time complexity, when to use
-- **Basic Fenwick tree implementation:** Simpler, more likely to be asked
-- **Don't memorize segment tree details:** Too complex for most interviews. Know it exists and its O(log n) query/update complexity.
+- **Basic Fenwick tree:** Simpler, more likely to be asked
+- **Segment tree:** Know it exists and its O(log n) complexity; implement if explicitly required
 
 | Pattern | Signal Words | Example Problems |
 |---------|--------------|------------------|
-| Range sum with updates | "mutable", "update element", "range sum" | Range Sum Query - Mutable (LeetCode 307) |
-| Count smaller numbers | "count smaller", "inversions" | Count of Smaller Numbers After Self (LeetCode 315) |
-| Range min/max queries | "range minimum", "range maximum" | Not common in NeetCode 150 |
+| Range sum with updates | "mutable", "update element", "range sum" | Range Sum Query - Mutable (307) |
+| Count smaller numbers | "count smaller", "inversions" | Count of Smaller Numbers After Self (315) |
 
-**Interview Insight:** If asked about range queries, start with simpler solutions (prefix sum, sliding window). Only escalate to segment/Fenwick trees if the interviewer pushes for optimal solution with updates.
+**Interview Insight:** If asked about range queries, start with prefix sum. Only escalate to segment/Fenwick trees if the interviewer pushes for O(log n) updates.
 
 ---
 
@@ -250,60 +202,29 @@ Segment trees and Fenwick trees are **rare in NeetCode 150** and standard interv
 | 1 | Range Sum Query - Immutable | Easy | Prefix sum (no tree needed) | 303 |
 | 2 | Range Sum Query - Mutable | Medium | Fenwick tree or segment tree | 307 |
 | 3 | Count of Smaller Numbers After Self | Hard | BIT with coordinate compression | 315 |
-| 4 | Range Sum Query 2D - Mutable | Hard | 2D BIT or 2D segment tree | 308 (premium) |
-
-**Recommendation:** Master prefix sums first. If pursuing competitive programming, learn Fenwick tree. Segment trees are optional for most software engineering interviews.
-
----
-
-## Comparison Summary
-
-```
-Prefix Sum Array:
-  Build: O(n)
-  Query: O(1)
-  Update: O(n)
-  Use: Static array, range sums
-
-Fenwick Tree (BIT):
-  Build: O(n log n) or O(n)
-  Query: O(log n)
-  Update: O(log n)
-  Use: Dynamic range sums
-
-Segment Tree:
-  Build: O(n)
-  Query: O(log n)
-  Update: O(log n)
-  Use: Dynamic range min/max/sum/GCD
-
-Segment Tree + Lazy:
-  Build: O(n)
-  Range Query: O(log n)
-  Range Update: O(log n)
-  Use: Both range updates and range queries
-```
 
 ---
 
 ## Quick Reference Card
 
+```java
+// Fenwick Tree (1-indexed)
+void update(int i, int delta) {
+    for (; i <= n; i += i & (-i)) tree[i] += delta;
+}
+int query(int i) {
+    int sum = 0;
+    for (; i > 0; i -= i & (-i)) sum += tree[i];
+    return sum;
+}
+int rangeQuery(int l, int r) { return query(r) - query(l - 1); }
+
+// Bit trick: i & (-i) extracts lowest set bit
+// Segment Tree: build O(n), update O(log n), query O(log n)
+// Tree size: 4 * n nodes (safe upper bound)
+
+Comparison:
+  Prefix sum: build O(n), query O(1), update O(n) -- no updates allowed
+  Fenwick:    build O(n log n), query O(log n), update O(log n) -- range sums
+  Segment:    build O(n), query O(log n), update O(log n) -- any associative op
 ```
-Fenwick Tree (1-indexed):
-  Update:  for i += i & (-i)  { tree[i] += delta }
-  Query:   for i -= i & (-i)  { sum += tree[i] }
-  Range:   Query(R) - Query(L-1)
-
-Segment Tree:
-  Size:    4 * n nodes
-  Build:   Recursive, O(n)
-  Update:  Navigate to leaf, update parents, O(log n)
-  Query:   Split range into tree nodes, O(log n)
-
-Bit trick:  i & (-i)  extracts lowest set bit
-            Determines responsibility range in BIT
-```
-
----
-
-> **Key Insight:** Segment trees and Fenwick trees are powerful but complex. For NeetCode 150 and most interviews, simpler structures (prefix sums, hash maps, sliding windows) suffice. Know that these exist, understand their O(log n) query/update complexity, and when they're appropriate. Only implement them when explicitly required or when pursuing competitive programming.

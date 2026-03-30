@@ -1,6 +1,6 @@
 # Sorting Algorithms Syllabus
 
-A comprehensive reference for every sorting algorithm you need for coding interviews and the NeetCode 150. Each section covers the concept, time/space complexity, stability, when to use it, Go pseudocode, common pitfalls, and NeetCode relevance.
+A comprehensive reference for every sorting algorithm you need for coding interviews and the NeetCode 150. Each section covers the concept, time/space complexity, stability, when to use it, Java implementation, common pitfalls, and NeetCode relevance.
 
 ---
 
@@ -69,22 +69,22 @@ Repeatedly walk through the array, comparing adjacent elements and swapping them
 **Stable:** Yes
 **In-Place:** Yes
 
-**Go Implementation:**
+**Java Implementation:**
 
-```go
-func bubbleSort(arr []int) {
-    n := len(arr)
-    for i := 0; i < n-1; i++ {
-        swapped := false
-        for j := 0; j < n-1-i; j++ {
-            if arr[j] > arr[j+1] {
-                arr[j], arr[j+1] = arr[j+1], arr[j]
-                swapped = true
+```java
+void bubbleSort(int[] arr) {
+    int n = arr.length;
+    for (int i = 0; i < n - 1; i++) {
+        boolean swapped = false;
+        for (int j = 0; j < n - 1 - i; j++) {
+            if (arr[j] > arr[j + 1]) {
+                int tmp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = tmp;
+                swapped = true;
             }
         }
-        if !swapped {
-            break // array is already sorted
-        }
+        if (!swapped) break; // array is already sorted
     }
 }
 ```
@@ -120,19 +120,21 @@ Find the minimum element in the unsorted portion and swap it to the front. Repea
 **Stable:** No (swapping can change relative order of equal elements)
 **In-Place:** Yes
 
-**Go Implementation:**
+**Java Implementation:**
 
-```go
-func selectionSort(arr []int) {
-    n := len(arr)
-    for i := 0; i < n-1; i++ {
-        minIdx := i
-        for j := i + 1; j < n; j++ {
-            if arr[j] < arr[minIdx] {
-                minIdx = j
+```java
+void selectionSort(int[] arr) {
+    int n = arr.length;
+    for (int i = 0; i < n - 1; i++) {
+        int minIdx = i;
+        for (int j = i + 1; j < n; j++) {
+            if (arr[j] < arr[minIdx]) {
+                minIdx = j;
             }
         }
-        arr[i], arr[minIdx] = arr[minIdx], arr[i]
+        int tmp = arr[i];
+        arr[i] = arr[minIdx];
+        arr[minIdx] = tmp;
     }
 }
 ```
@@ -168,19 +170,19 @@ Build the sorted array one element at a time. Take the next unsorted element and
 **Stable:** Yes
 **In-Place:** Yes
 
-**Go Implementation:**
+**Java Implementation:**
 
-```go
-func insertionSort(arr []int) {
-    for i := 1; i < len(arr); i++ {
-        key := arr[i]
-        j := i - 1
+```java
+void insertionSort(int[] arr) {
+    for (int i = 1; i < arr.length; i++) {
+        int key = arr[i];
+        int j = i - 1;
         // Shift elements that are greater than key
-        for j >= 0 && arr[j] > key {
-            arr[j+1] = arr[j]
-            j--
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j--;
         }
-        arr[j+1] = key
+        arr[j + 1] = key;
     }
 }
 ```
@@ -225,79 +227,55 @@ Divide the array in half, recursively sort each half, then merge the two sorted 
 **Stable:** Yes
 **In-Place:** No
 
-**Go Implementation:**
+**Java Implementation:**
 
-```go
-func mergeSort(arr []int) []int {
-    if len(arr) <= 1 {
-        return arr
-    }
+```java
+int[] mergeSort(int[] arr) {
+    if (arr.length <= 1) return arr;
 
-    mid := len(arr) / 2
-    left := mergeSort(arr[:mid])
-    right := mergeSort(arr[mid:])
+    int mid = arr.length / 2;
+    int[] left = mergeSort(Arrays.copyOfRange(arr, 0, mid));
+    int[] right = mergeSort(Arrays.copyOfRange(arr, mid, arr.length));
 
-    return merge(left, right)
+    return merge(left, right);
 }
 
-func merge(left, right []int) []int {
-    result := make([]int, 0, len(left)+len(right))
-    i, j := 0, 0
+int[] merge(int[] left, int[] right) {
+    int[] result = new int[left.length + right.length];
+    int i = 0, j = 0, k = 0;
 
-    for i < len(left) && j < len(right) {
-        if left[i] <= right[j] {  // <= for stability
-            result = append(result, left[i])
-            i++
+    while (i < left.length && j < right.length) {
+        if (left[i] <= right[j]) { // <= for stability
+            result[k++] = left[i++];
         } else {
-            result = append(result, right[j])
-            j++
+            result[k++] = right[j++];
         }
     }
-
-    result = append(result, left[i:]...)
-    result = append(result, right[j:]...)
-    return result
-}
-```
-
-**In-Place Merge Sort Variant (for arrays):**
-
-```go
-func mergeSortInPlace(arr []int, lo, hi int) {
-    if hi-lo <= 1 {
-        return
-    }
-    mid := lo + (hi-lo)/2
-    mergeSortInPlace(arr, lo, mid)
-    mergeSortInPlace(arr, mid, hi)
-    mergeInPlace(arr, lo, mid, hi)
+    while (i < left.length) result[k++] = left[i++];
+    while (j < right.length) result[k++] = right[j++];
+    return result;
 }
 
-func mergeInPlace(arr []int, lo, mid, hi int) {
-    temp := make([]int, hi-lo)
-    i, j, k := lo, mid, 0
+// In-place merge sort (avoids extra array allocation per call)
+void mergeSortInPlace(int[] arr, int lo, int hi) {
+    if (hi - lo <= 1) return;
+    int mid = lo + (hi - lo) / 2;
+    mergeSortInPlace(arr, lo, mid);
+    mergeSortInPlace(arr, mid, hi);
+    mergeInPlace(arr, lo, mid, hi);
+}
 
-    for i < mid && j < hi {
-        if arr[i] <= arr[j] {
-            temp[k] = arr[i]
-            i++
-        } else {
-            temp[k] = arr[j]
-            j++
-        }
-        k++
+void mergeInPlace(int[] arr, int lo, int mid, int hi) {
+    int[] temp = new int[hi - lo];
+    int i = lo, j = mid, k = 0;
+
+    while (i < mid && j < hi) {
+        if (arr[i] <= arr[j]) temp[k++] = arr[i++];
+        else temp[k++] = arr[j++];
     }
-    for i < mid {
-        temp[k] = arr[i]
-        i++
-        k++
-    }
-    for j < hi {
-        temp[k] = arr[j]
-        j++
-        k++
-    }
-    copy(arr[lo:hi], temp)
+    while (i < mid) temp[k++] = arr[i++];
+    while (j < hi) temp[k++] = arr[j++];
+    System.arraycopy(temp, 0, arr, lo, temp.length);
 }
 ```
 
@@ -306,45 +284,39 @@ Merge sort is ideal for linked lists because:
 - Splitting is O(n) with slow/fast pointers (no random access needed)
 - Merging is O(1) extra space (just rearrange pointers)
 
-```go
-func sortList(head *ListNode) *ListNode {
-    if head == nil || head.Next == nil {
-        return head
-    }
+```java
+ListNode sortList(ListNode head) {
+    if (head == null || head.next == null) return head;
 
     // Find middle with slow/fast
-    slow, fast := head, head.Next
-    for fast != nil && fast.Next != nil {
-        slow = slow.Next
-        fast = fast.Next.Next
+    ListNode slow = head, fast = head.next;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
     }
-    mid := slow.Next
-    slow.Next = nil // split
+    ListNode mid = slow.next;
+    slow.next = null; // split
 
-    left := sortList(head)
-    right := sortList(mid)
-    return mergeLists(left, right)
+    ListNode left = sortList(head);
+    ListNode right = sortList(mid);
+    return mergeLists(left, right);
 }
 
-func mergeLists(l1, l2 *ListNode) *ListNode {
-    dummy := &ListNode{}
-    curr := dummy
-    for l1 != nil && l2 != nil {
-        if l1.Val <= l2.Val {
-            curr.Next = l1
-            l1 = l1.Next
+ListNode mergeLists(ListNode l1, ListNode l2) {
+    ListNode dummy = new ListNode(0);
+    ListNode curr = dummy;
+    while (l1 != null && l2 != null) {
+        if (l1.val <= l2.val) {
+            curr.next = l1;
+            l1 = l1.next;
         } else {
-            curr.Next = l2
-            l2 = l2.Next
+            curr.next = l2;
+            l2 = l2.next;
         }
-        curr = curr.Next
+        curr = curr.next;
     }
-    if l1 != nil {
-        curr.Next = l1
-    } else {
-        curr.Next = l2
-    }
-    return dummy.Next
+    curr.next = (l1 != null) ? l1 : l2;
+    return dummy.next;
 }
 ```
 
@@ -358,7 +330,7 @@ func mergeLists(l1, l2 *ListNode) *ListNode {
 **Common Pitfalls:**
 - Forgetting to use `<=` in the merge step (breaks stability)
 - Not handling empty subarrays in the merge
-- Excessive memory allocation (reuse the temp array across calls)
+- Excessive object allocation with `Arrays.copyOfRange` -- reuse a temp array
 
 > **Key Insight:** Merge sort's guarantee of O(n log n) in ALL cases makes it reliable. Its merge step is the key operation -- it also solves problems like "merge K sorted lists" and "count inversions."
 
@@ -382,27 +354,27 @@ Choose a pivot element, partition the array so all elements less than the pivot 
 
 Simpler to understand. Pivot is typically the last element.
 
-```go
-func quickSortLomuto(arr []int, lo, hi int) {
-    if lo < hi {
-        p := lomutoPartition(arr, lo, hi)
-        quickSortLomuto(arr, lo, p-1)
-        quickSortLomuto(arr, p+1, hi)
+```java
+void quickSortLomuto(int[] arr, int lo, int hi) {
+    if (lo < hi) {
+        int p = lomutoPartition(arr, lo, hi);
+        quickSortLomuto(arr, lo, p - 1);
+        quickSortLomuto(arr, p + 1, hi);
     }
 }
 
-func lomutoPartition(arr []int, lo, hi int) int {
-    pivot := arr[hi]
-    i := lo - 1
+int lomutoPartition(int[] arr, int lo, int hi) {
+    int pivot = arr[hi];
+    int i = lo - 1;
 
-    for j := lo; j < hi; j++ {
-        if arr[j] <= pivot {
-            i++
-            arr[i], arr[j] = arr[j], arr[i]
+    for (int j = lo; j < hi; j++) {
+        if (arr[j] <= pivot) {
+            i++;
+            int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
         }
     }
-    arr[i+1], arr[hi] = arr[hi], arr[i+1]
-    return i + 1
+    int tmp = arr[i + 1]; arr[i + 1] = arr[hi]; arr[hi] = tmp;
+    return i + 1;
 }
 ```
 
@@ -410,36 +382,24 @@ func lomutoPartition(arr []int, lo, hi int) int {
 
 More efficient (fewer swaps on average). Two pointers move inward.
 
-```go
-func quickSortHoare(arr []int, lo, hi int) {
-    if lo < hi {
-        p := hoarePartition(arr, lo, hi)
-        quickSortHoare(arr, lo, p)
-        quickSortHoare(arr, p+1, hi)
+```java
+void quickSortHoare(int[] arr, int lo, int hi) {
+    if (lo < hi) {
+        int p = hoarePartition(arr, lo, hi);
+        quickSortHoare(arr, lo, p);
+        quickSortHoare(arr, p + 1, hi);
     }
 }
 
-func hoarePartition(arr []int, lo, hi int) int {
-    pivot := arr[lo+(hi-lo)/2]
-    i, j := lo-1, hi+1
+int hoarePartition(int[] arr, int lo, int hi) {
+    int pivot = arr[lo + (hi - lo) / 2];
+    int i = lo - 1, j = hi + 1;
 
-    for {
-        for {
-            i++
-            if arr[i] >= pivot {
-                break
-            }
-        }
-        for {
-            j--
-            if arr[j] <= pivot {
-                break
-            }
-        }
-        if i >= j {
-            return j
-        }
-        arr[i], arr[j] = arr[j], arr[i]
+    while (true) {
+        do { i++; } while (arr[i] < pivot);
+        do { j--; } while (arr[j] > pivot);
+        if (i >= j) return j;
+        int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
     }
 }
 ```
@@ -452,20 +412,14 @@ func hoarePartition(arr []int, lo, hi int) int {
 | Random | Random index | O(n^2) very unlikely |
 | Median of Three | Median of first, middle, last | O(n^2) rare |
 
-```go
+```java
 // Median of three pivot selection
-func medianOfThree(arr []int, lo, hi int) int {
-    mid := lo + (hi-lo)/2
-    if arr[lo] > arr[mid] {
-        arr[lo], arr[mid] = arr[mid], arr[lo]
-    }
-    if arr[lo] > arr[hi] {
-        arr[lo], arr[hi] = arr[hi], arr[lo]
-    }
-    if arr[mid] > arr[hi] {
-        arr[mid], arr[hi] = arr[hi], arr[mid]
-    }
-    return mid
+int medianOfThree(int[] arr, int lo, int hi) {
+    int mid = lo + (hi - lo) / 2;
+    if (arr[lo] > arr[mid]) { int t = arr[lo]; arr[lo] = arr[mid]; arr[mid] = t; }
+    if (arr[lo] > arr[hi]) { int t = arr[lo]; arr[lo] = arr[hi]; arr[hi] = t; }
+    if (arr[mid] > arr[hi]) { int t = arr[mid]; arr[mid] = arr[hi]; arr[hi] = t; }
+    return mid; // arr[mid] is now the median
 }
 ```
 
@@ -473,30 +427,24 @@ func medianOfThree(arr []int, lo, hi int) int {
 
 A variant that only recurses into one partition -- finds the Kth element in O(n) average time.
 
-```go
-func findKthSmallest(arr []int, k int) int {
-    return quickselect(arr, 0, len(arr)-1, k-1) // 0-indexed
+```java
+int findKthSmallest(int[] arr, int k) {
+    return quickselect(arr, 0, arr.length - 1, k - 1); // 0-indexed
 }
 
-func quickselect(arr []int, lo, hi, k int) int {
-    if lo == hi {
-        return arr[lo]
-    }
+int quickselect(int[] arr, int lo, int hi, int k) {
+    if (lo == hi) return arr[lo];
 
-    pivotIdx := lomutoPartition(arr, lo, hi)
+    int pivotIdx = lomutoPartition(arr, lo, hi);
 
-    if k == pivotIdx {
-        return arr[k]
-    } else if k < pivotIdx {
-        return quickselect(arr, lo, pivotIdx-1, k)
-    } else {
-        return quickselect(arr, pivotIdx+1, hi, k)
-    }
+    if (k == pivotIdx) return arr[k];
+    else if (k < pivotIdx) return quickselect(arr, lo, pivotIdx - 1, k);
+    else return quickselect(arr, pivotIdx + 1, hi, k);
 }
 
 // Kth largest = (n-k)th smallest
-func findKthLargest(arr []int, k int) int {
-    return findKthSmallest(arr, len(arr)-k+1)
+int findKthLargest(int[] arr, int k) {
+    return findKthSmallest(arr, arr.length - k + 1);
 }
 ```
 
@@ -529,39 +477,35 @@ Build a max-heap from the array, then repeatedly extract the maximum and place i
 **Stable:** No
 **In-Place:** Yes
 
-**Go Implementation:**
+**Java Implementation:**
 
-```go
-func heapSort(arr []int) {
-    n := len(arr)
+```java
+void heapSort(int[] arr) {
+    int n = arr.length;
 
     // Build max heap (start from last non-leaf node)
-    for i := n/2 - 1; i >= 0; i-- {
-        heapify(arr, n, i)
+    for (int i = n / 2 - 1; i >= 0; i--) {
+        heapify(arr, n, i);
     }
 
     // Extract elements one by one
-    for i := n - 1; i > 0; i-- {
-        arr[0], arr[i] = arr[i], arr[0] // move max to end
-        heapify(arr, i, 0)               // heapify reduced heap
+    for (int i = n - 1; i > 0; i--) {
+        int tmp = arr[0]; arr[0] = arr[i]; arr[i] = tmp; // move max to end
+        heapify(arr, i, 0); // heapify reduced heap
     }
 }
 
-func heapify(arr []int, size, root int) {
-    largest := root
-    left := 2*root + 1
-    right := 2*root + 2
+void heapify(int[] arr, int size, int root) {
+    int largest = root;
+    int left = 2 * root + 1;
+    int right = 2 * root + 2;
 
-    if left < size && arr[left] > arr[largest] {
-        largest = left
-    }
-    if right < size && arr[right] > arr[largest] {
-        largest = right
-    }
+    if (left < size && arr[left] > arr[largest]) largest = left;
+    if (right < size && arr[right] > arr[largest]) largest = right;
 
-    if largest != root {
-        arr[root], arr[largest] = arr[largest], arr[root]
-        heapify(arr, size, largest) // recursively fix the subtree
+    if (largest != root) {
+        int tmp = arr[root]; arr[root] = arr[largest]; arr[largest] = tmp;
+        heapify(arr, size, largest); // recursively fix the subtree
     }
 }
 ```
@@ -623,61 +567,50 @@ Count the occurrences of each value, then use those counts to place elements in 
 **Stable:** Yes (with the proper implementation)
 **In-Place:** No
 
-**Go Implementation:**
+**Java Implementation:**
 
-```go
+```java
 // Simple counting sort (for non-negative integers)
-func countingSort(arr []int) []int {
-    if len(arr) == 0 {
-        return arr
-    }
+int[] countingSort(int[] arr) {
+    if (arr.length == 0) return arr;
 
     // Find range
-    maxVal := arr[0]
-    for _, v := range arr {
-        if v > maxVal {
-            maxVal = v
-        }
-    }
+    int maxVal = arr[0];
+    for (int v : arr) maxVal = Math.max(maxVal, v);
 
     // Count occurrences
-    count := make([]int, maxVal+1)
-    for _, v := range arr {
-        count[v]++
-    }
+    int[] count = new int[maxVal + 1];
+    for (int v : arr) count[v]++;
 
     // Build sorted array
-    result := make([]int, 0, len(arr))
-    for val, cnt := range count {
-        for i := 0; i < cnt; i++ {
-            result = append(result, val)
+    int[] result = new int[arr.length];
+    int idx = 0;
+    for (int val = 0; val <= maxVal; val++) {
+        while (count[val]-- > 0) {
+            result[idx++] = val;
         }
     }
-    return result
+    return result;
 }
 
 // Stable counting sort (preserves relative order)
-func countingSortStable(arr []int, maxVal int) []int {
-    n := len(arr)
-    count := make([]int, maxVal+1)
-    output := make([]int, n)
+int[] countingSortStable(int[] arr, int maxVal) {
+    int n = arr.length;
+    int[] count = new int[maxVal + 1];
+    int[] output = new int[n];
 
     // Count occurrences
-    for _, v := range arr {
-        count[v]++
-    }
+    for (int v : arr) count[v]++;
 
     // Cumulative count (each count[i] = number of elements <= i)
-    for i := 1; i <= maxVal; i++ {
-        count[i] += count[i-1]
-    }
+    for (int i = 1; i <= maxVal; i++) count[i] += count[i - 1];
 
     // Build output array (iterate backwards for stability)
-    for i := n - 1; i >= 0; i-- {
-        output[count[arr[i]]-1] = arr[i]
-        count[arr[i]]--
+    for (int i = n - 1; i >= 0; i--) {
+        output[count[arr[i]] - 1] = arr[i];
+        count[arr[i]]--;
     }
-    return output
+    return output;
 }
 ```
 
@@ -707,52 +640,41 @@ Sort numbers digit by digit, from least significant to most significant (LSD) or
 **Stable:** Yes
 **In-Place:** No
 
-**Go Implementation (LSD Radix Sort):**
+**Java Implementation (LSD Radix Sort):**
 
-```go
-func radixSort(arr []int) []int {
-    if len(arr) == 0 {
-        return arr
-    }
+```java
+int[] radixSort(int[] arr) {
+    if (arr.length == 0) return arr;
 
     // Find maximum to determine number of digits
-    maxVal := arr[0]
-    for _, v := range arr {
-        if v > maxVal {
-            maxVal = v
-        }
-    }
+    int maxVal = arr[0];
+    for (int v : arr) maxVal = Math.max(maxVal, v);
 
     // Sort by each digit (1s, 10s, 100s, ...)
-    for exp := 1; maxVal/exp > 0; exp *= 10 {
-        arr = countingSortByDigit(arr, exp)
+    for (int exp = 1; maxVal / exp > 0; exp *= 10) {
+        arr = countingSortByDigit(arr, exp);
     }
-    return arr
+    return arr;
 }
 
-func countingSortByDigit(arr []int, exp int) []int {
-    n := len(arr)
-    output := make([]int, n)
-    count := make([]int, 10) // digits 0-9
+int[] countingSortByDigit(int[] arr, int exp) {
+    int n = arr.length;
+    int[] output = new int[n];
+    int[] count = new int[10]; // digits 0-9
 
     // Count occurrences of each digit
-    for _, v := range arr {
-        digit := (v / exp) % 10
-        count[digit]++
-    }
+    for (int v : arr) count[(v / exp) % 10]++;
 
     // Cumulative count
-    for i := 1; i < 10; i++ {
-        count[i] += count[i-1]
-    }
+    for (int i = 1; i < 10; i++) count[i] += count[i - 1];
 
     // Build output (backwards for stability)
-    for i := n - 1; i >= 0; i-- {
-        digit := (arr[i] / exp) % 10
-        output[count[digit]-1] = arr[i]
-        count[digit]--
+    for (int i = n - 1; i >= 0; i--) {
+        int digit = (arr[i] / exp) % 10;
+        output[count[digit] - 1] = arr[i];
+        count[digit]--;
     }
-    return output
+    return output;
 }
 ```
 
@@ -787,53 +709,32 @@ Distribute elements into "buckets" based on their value range, sort each bucket 
 **Stable:** Depends on inner sort
 **In-Place:** No
 
-**Go Implementation:**
+**Java Implementation:**
 
-```go
-func bucketSort(arr []float64) []float64 {
-    n := len(arr)
-    if n == 0 {
-        return arr
+```java
+double[] bucketSort(double[] arr) {
+    int n = arr.length;
+    if (n == 0) return arr;
+
+    // Create buckets (assuming values in [0.0, 1.0))
+    @SuppressWarnings("unchecked")
+    List<Double>[] buckets = new ArrayList[n];
+    for (int i = 0; i < n; i++) buckets[i] = new ArrayList<>();
+
+    // Distribute elements into buckets
+    for (double v : arr) {
+        int idx = (int) (v * n);
+        if (idx >= n) idx = n - 1;
+        buckets[idx].add(v);
     }
 
-    // Create buckets
-    buckets := make([][]float64, n)
-    for i := range buckets {
-        buckets[i] = []float64{}
+    // Sort each bucket and concatenate
+    int k = 0;
+    for (List<Double> bucket : buckets) {
+        Collections.sort(bucket); // or insertion sort for small buckets
+        for (double v : bucket) arr[k++] = v;
     }
-
-    // Distribute elements into buckets (assuming values in [0, 1))
-    for _, v := range arr {
-        idx := int(v * float64(n))
-        if idx >= n {
-            idx = n - 1
-        }
-        buckets[idx] = append(buckets[idx], v)
-    }
-
-    // Sort each bucket (insertion sort for small buckets)
-    for i := range buckets {
-        insertionSortFloat(buckets[i])
-    }
-
-    // Concatenate
-    result := make([]float64, 0, n)
-    for _, bucket := range buckets {
-        result = append(result, bucket...)
-    }
-    return result
-}
-
-func insertionSortFloat(arr []float64) {
-    for i := 1; i < len(arr); i++ {
-        key := arr[i]
-        j := i - 1
-        for j >= 0 && arr[j] > key {
-            arr[j+1] = arr[j]
-            j--
-        }
-        arr[j+1] = key
-    }
+    return arr;
 }
 ```
 
@@ -859,7 +760,7 @@ func insertionSortFloat(arr []float64) {
 **Difficulty:** Intermediate (conceptual)
 
 **Concept:**
-Tim Sort is a hybrid sorting algorithm combining merge sort and insertion sort. It's the algorithm behind Go's `sort.Slice`, Python's `sorted()`, and Java's `Arrays.sort()` for objects. It's designed for real-world data that often has existing order.
+Tim Sort is a hybrid sorting algorithm combining merge sort and insertion sort. It's the algorithm behind Java's `Arrays.sort()` for objects (and `Collections.sort()`). It's designed for real-world data that often has existing order.
 
 **How It Works:**
 1. Divide the array into small chunks called "runs" (typically 32-64 elements).
@@ -873,38 +774,51 @@ Tim Sort is a hybrid sorting algorithm combining merge sort and insertion sort. 
 **Space Complexity:** O(n)
 **Stable:** Yes
 
-**Go Standard Library Usage:**
+**Java Standard Library Usage:**
 
-```go
-import "sort"
+```java
+import java.util.Arrays;
+import java.util.Collections;
 
-// Sort a slice of ints
-nums := []int{5, 3, 8, 1, 2}
-sort.Ints(nums)
+// Sort a primitive array -- uses dual-pivot quicksort (NOT TimSort)
+int[] nums = {5, 3, 8, 1, 2};
+Arrays.sort(nums);
 
-// Sort with custom comparator
-sort.Slice(nums, func(i, j int) bool {
-    return nums[i] < nums[j]
-})
+// Sort an object array -- uses TimSort (stable)
+Integer[] boxed = {5, 3, 8, 1, 2};
+Arrays.sort(boxed);
 
-// Sort a struct slice
-type Person struct {
-    Name string
-    Age  int
-}
-people := []Person{{"Bob", 30}, {"Alice", 25}, {"Charlie", 35}}
-sort.Slice(people, func(i, j int) bool {
-    return people[i].Age < people[j].Age
-})
+// Sort with custom comparator (descending)
+Arrays.sort(boxed, (a, b) -> b - a);
+// Safe version (avoids overflow):
+Arrays.sort(boxed, Comparator.reverseOrder());
+
+// Sort a List
+List<Integer> list = new ArrayList<>(Arrays.asList(5, 3, 8, 1, 2));
+Collections.sort(list);
+list.sort(Comparator.naturalOrder());  // equivalent, Java 8+
+list.sort(Comparator.reverseOrder());
+
+// Sort a List of objects by a field
+List<int[]> pairs = new ArrayList<>();
+pairs.sort((a, b) -> a[0] != b[0] ? a[0] - b[0] : a[1] - b[1]); // sort by first, then second
+
+// Sort a 2D array
+int[][] matrix = {{3, 1}, {1, 2}, {2, 3}};
+Arrays.sort(matrix, (a, b) -> a[0] - b[0]); // sort by first column
+
+// Stable sort for objects (Collections.sort is always stable)
+// Arrays.sort for object arrays is also stable (TimSort)
 
 // Check if sorted
-isSorted := sort.IntsAreSorted(nums)
-
-// sort.SliceStable guarantees stability
-sort.SliceStable(people, func(i, j int) bool {
-    return people[i].Name < people[j].Name
-})
+boolean isSorted = IntStream.range(0, nums.length - 1)
+    .allMatch(i -> nums[i] <= nums[i + 1]);
 ```
+
+**Java-Specific Notes:**
+- `Arrays.sort(int[])` uses **dual-pivot quicksort** (NOT TimSort) -- it is NOT stable
+- `Arrays.sort(Integer[])` and `Collections.sort(List<Integer>)` use **TimSort** -- stable
+- For stable sorting of primitive arrays, box to `Integer[]` first, or use a custom sort
 
 **Why Tim Sort is Practical:**
 - Real data often has "runs" of already-sorted elements
@@ -912,9 +826,9 @@ sort.SliceStable(people, func(i, j int) bool {
 - The merge phase benefits from galloping when runs are large
 - Stable: equal elements keep their original order
 
-> **Key Insight:** In interviews, just use `sort.Slice()` or `sort.Ints()` when you need to sort. Know that it's O(n log n), stable (with `SliceStable`), and uses Tim Sort internally. Understanding Tim Sort conceptually shows depth of knowledge.
+> **Key Insight:** In interviews, just use `Arrays.sort()` or `Collections.sort()` when you need to sort. Know that for object arrays it's O(n log n) and stable. For primitives, it uses dual-pivot quicksort (also O(n log n) but not stable).
 
-**NeetCode Relevance:** Many problems start with "sort the input" -- use Go's built-in sort.
+**NeetCode Relevance:** Many problems start with "sort the input" -- use Java's built-in sort.
 
 ---
 
@@ -930,43 +844,42 @@ Partition an array into three sections based on a pivot value: elements less tha
 **Stable:** No
 **In-Place:** Yes
 
-**Go Implementation:**
+**Java Implementation:**
 
-```go
+```java
 // Sort Colors (LeetCode 75): sort array of 0s, 1s, and 2s
-func sortColors(nums []int) {
-    lo, mid, hi := 0, 0, len(nums)-1
+void sortColors(int[] nums) {
+    int lo = 0, mid = 0, hi = nums.length - 1;
 
-    for mid <= hi {
-        switch nums[mid] {
-        case 0:
-            nums[lo], nums[mid] = nums[mid], nums[lo]
-            lo++
-            mid++
-        case 1:
-            mid++
-        case 2:
-            nums[mid], nums[hi] = nums[hi], nums[mid]
-            hi--
+    while (mid <= hi) {
+        if (nums[mid] == 0) {
+            int tmp = nums[lo]; nums[lo] = nums[mid]; nums[mid] = tmp;
+            lo++;
+            mid++;
+        } else if (nums[mid] == 1) {
+            mid++;
+        } else { // nums[mid] == 2
+            int tmp = nums[mid]; nums[mid] = nums[hi]; nums[hi] = tmp;
+            hi--;
             // Don't increment mid -- the swapped element needs checking
         }
     }
 }
 
 // General 3-way partition around a pivot
-func threeWayPartition(arr []int, pivot int) {
-    lo, mid, hi := 0, 0, len(arr)-1
+void threeWayPartition(int[] arr, int pivot) {
+    int lo = 0, mid = 0, hi = arr.length - 1;
 
-    for mid <= hi {
-        if arr[mid] < pivot {
-            arr[lo], arr[mid] = arr[mid], arr[lo]
-            lo++
-            mid++
-        } else if arr[mid] == pivot {
-            mid++
+    while (mid <= hi) {
+        if (arr[mid] < pivot) {
+            int tmp = arr[lo]; arr[lo] = arr[mid]; arr[mid] = tmp;
+            lo++;
+            mid++;
+        } else if (arr[mid] == pivot) {
+            mid++;
         } else {
-            arr[mid], arr[hi] = arr[hi], arr[mid]
-            hi--
+            int tmp = arr[mid]; arr[mid] = arr[hi]; arr[hi] = tmp;
+            hi--;
         }
     }
     // Result: arr[0..lo-1] < pivot, arr[lo..hi] == pivot, arr[hi+1..n-1] > pivot
@@ -1007,7 +920,7 @@ mid > hi → done: [0, 0, 1, 1, 2, 2]
 
 ```
 Is the data already mostly sorted?
-├── Yes → Insertion Sort (small) or Tim Sort / sort.Slice (large)
+├── Yes → Insertion Sort (small) or Collections.sort / Arrays.sort (large)
 └── No
     ├── Are the values integers with a small range?
     │   └── Yes → Counting Sort
@@ -1016,7 +929,7 @@ Is the data already mostly sorted?
     ├── Is the data uniformly distributed?
     │   └── Yes → Bucket Sort
     ├── Do you need stability?
-    │   ├── Yes → Merge Sort or sort.SliceStable
+    │   ├── Yes → Merge Sort or Collections.sort (TimSort)
     │   └── No
     │       ├── Need O(1) extra space?
     │       │   ├── Yes → Heap Sort (guaranteed) or Quick Sort (usually faster)
@@ -1024,7 +937,7 @@ Is the data already mostly sorted?
     │       └── Need fastest average case?
     │           └── Quick Sort
     └── In an interview?
-        └── Use sort.Slice() and explain what it does internally
+        └── Use Arrays.sort() / Collections.sort() and explain what it does internally
 ```
 
 ---
@@ -1043,5 +956,5 @@ Is the data already mostly sorted?
 - [ ] Counting Sort
 - [ ] Radix Sort
 - [ ] Bucket Sort
-- [ ] Tim Sort (conceptual + Go's sort.Slice)
+- [ ] Tim Sort (conceptual + Java's Arrays.sort / Collections.sort)
 - [ ] Dutch National Flag / 3-Way Partition

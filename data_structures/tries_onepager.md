@@ -7,8 +7,8 @@ A **trie** (pronounced "try") is a tree-like data structure specialized for stor
 **How It Works:**
 - The root node is empty (represents the empty string)
 - Each edge is labeled with a character
-- Each node may have up to 26 children (for lowercase English) or 256 (for ASCII) or more (for Unicode)
-- Nodes are marked with an `IsEnd` flag to indicate a complete word ends there
+- Each node may have up to 26 children (for lowercase English) or more for other alphabets
+- Nodes are marked with an `isEnd` flag to indicate a complete word ends there
 
 For example, storing "cat", "car", and "dog":
 ```
@@ -21,9 +21,9 @@ For example, storing "cat", "car", and "dog":
    t   r      g
   (E) (E)    (E)
 ```
-(E) = `IsEnd` flag set
+(E) = `isEnd` flag set
 
-**Why Tries Excel:** In a hash map, searching for all words with a given prefix requires checking every word. In a trie, you walk down the prefix path once, then collect all descendants. Tries are the go-to for autocomplete, spell checkers, and IP routing tables.
+**Why Tries Excel:** In a hash map, searching for all words with a given prefix requires checking every word. In a trie, you walk down the prefix path once, then collect all descendants. Tries are the go-to for autocomplete, spell checkers, and IP routing.
 
 ---
 
@@ -32,17 +32,18 @@ For example, storing "cat", "car", and "dog":
 | Operation | Time Complexity | Notes |
 |-----------|----------------|-------|
 | Insert word | O(m) | m = length of word; create nodes as needed |
-| Search exact word | O(m) | Walk path, check `IsEnd` at final node |
-| Search prefix | O(m) | Walk path, don't need `IsEnd` check |
-| Delete word | O(m) | Mark `IsEnd` as false; optionally prune empty nodes |
+| Search exact word | O(m) | Walk path, check `isEnd` at final node |
+| Search prefix | O(m) | Walk path, don't need `isEnd` check |
+| Delete word | O(m) | Mark `isEnd` as false; optionally prune empty nodes |
 | Autocomplete | O(m + k) | m = prefix length, k = total chars in results |
-| Count words with prefix | O(m + n) | m = prefix length, n = nodes in subtree |
+| Count words with prefix | O(m + n) | n = nodes in subtree |
 | Longest common prefix | O(m) | Walk until branching or end |
 
 **Space Complexity:**
-- Worst case: O(ALPHABET_SIZE * N * M) where N = number of words, M = average length
+- Worst case: O(ALPHABET_SIZE × N × M) where N = number of words, M = average length
 - Practical case: Much better due to prefix sharing
-- Using `map[rune]*TrieNode` vs `[26]*TrieNode`: map is flexible but slower and uses more memory; fixed array is faster for known alphabets
+- `TrieNode[]` (array): faster, less memory for known alphabets
+- `Map<Character, TrieNode>`: flexible, sparse-friendly
 
 ---
 
@@ -50,53 +51,49 @@ For example, storing "cat", "car", and "dog":
 
 ### 1. Trie Node and Structure
 
-```go
-type TrieNode struct {
-    Children map[rune]*TrieNode  // or [26]*TrieNode for lowercase ASCII
-    IsEnd    bool                 // marks a complete word
+```java
+class TrieNode {
+    TrieNode[] children = new TrieNode[26];  // for lowercase a-z
+    boolean isEnd = false;
 }
 
-type Trie struct {
-    Root *TrieNode
-}
-
-func NewTrie() *Trie {
-    return &Trie{Root: &TrieNode{Children: make(map[rune]*TrieNode)}}
+class Trie {
+    private TrieNode root = new TrieNode();
 }
 ```
 
-**Array vs Map for Children:**
-- `[26]*TrieNode`: Faster, fixed memory, only for lowercase a-z
-- `map[rune]*TrieNode`: Flexible for any characters, sparse storage
+**Array vs Map for children:**
+- `TrieNode[26]`: faster, fixed memory, only for lowercase a-z
+- `Map<Character, TrieNode>`: flexible for any characters, sparse storage
 - Choose based on constraints: interviews often allow assuming lowercase English
 
 ### 2. Insert Word
 
-```go
-func (t *Trie) Insert(word string) {
-    node := t.Root
-    for _, ch := range word {
-        if _, ok := node.Children[ch]; !ok {
-            node.Children[ch] = &TrieNode{Children: make(map[rune]*TrieNode)}
+```java
+void insert(String word) {
+    TrieNode node = root;
+    for (char c : word.toCharArray()) {
+        int idx = c - 'a';
+        if (node.children[idx] == null) {
+            node.children[idx] = new TrieNode();
         }
-        node = node.Children[ch]
+        node = node.children[idx];
     }
-    node.IsEnd = true  // mark the end of the word
+    node.isEnd = true;  // mark the end of the word
 }
 ```
 
 ### 3. Search Exact Word
 
-```go
-func (t *Trie) Search(word string) bool {
-    node := t.Root
-    for _, ch := range word {
-        if _, ok := node.Children[ch]; !ok {
-            return false
-        }
-        node = node.Children[ch]
+```java
+boolean search(String word) {
+    TrieNode node = root;
+    for (char c : word.toCharArray()) {
+        int idx = c - 'a';
+        if (node.children[idx] == null) return false;
+        node = node.children[idx];
     }
-    return node.IsEnd  // must be a complete word, not just a prefix
+    return node.isEnd;  // must be a complete word, not just a prefix
 }
 ```
 
@@ -104,84 +101,76 @@ func (t *Trie) Search(word string) bool {
 
 Check if any word in the trie starts with the given prefix.
 
-```go
-func (t *Trie) StartsWith(prefix string) bool {
-    node := t.Root
-    for _, ch := range prefix {
-        if _, ok := node.Children[ch]; !ok {
-            return false
-        }
-        node = node.Children[ch]
+```java
+boolean startsWith(String prefix) {
+    TrieNode node = root;
+    for (char c : prefix.toCharArray()) {
+        int idx = c - 'a';
+        if (node.children[idx] == null) return false;
+        node = node.children[idx];
     }
-    return true  // found the prefix path
+    return true;  // found the prefix path
 }
 ```
 
-### 5. Delete Word
+### 5. Complete Trie Implementation (LeetCode 208)
 
-Mark `IsEnd` as false. Optionally prune nodes with no children.
+```java
+class Trie {
+    private TrieNode root = new TrieNode();
 
-```go
-func (t *Trie) Delete(word string) bool {
-    return deleteHelper(t.Root, word, 0)
-}
-
-func deleteHelper(node *TrieNode, word string, index int) bool {
-    if index == len(word) {
-        if !node.IsEnd {
-            return false  // word not found
+    public void insert(String word) {
+        TrieNode node = root;
+        for (char c : word.toCharArray()) {
+            int i = c - 'a';
+            if (node.children[i] == null) node.children[i] = new TrieNode();
+            node = node.children[i];
         }
-        node.IsEnd = false
-        // Return true if no children (can be deleted)
-        return len(node.Children) == 0
+        node.isEnd = true;
     }
 
-    ch := rune(word[index])
-    child, ok := node.Children[ch]
-    if !ok {
-        return false  // word not found
+    public boolean search(String word) {
+        TrieNode node = find(word);
+        return node != null && node.isEnd;
     }
 
-    shouldDeleteChild := deleteHelper(child, word, index+1)
-
-    if shouldDeleteChild {
-        delete(node.Children, ch)
-        // Return true if current node is not end of another word and has no children
-        return !node.IsEnd && len(node.Children) == 0
+    public boolean startsWith(String prefix) {
+        return find(prefix) != null;
     }
 
-    return false
+    private TrieNode find(String s) {
+        TrieNode node = root;
+        for (char c : s.toCharArray()) {
+            int i = c - 'a';
+            if (node.children[i] == null) return null;
+            node = node.children[i];
+        }
+        return node;
+    }
 }
 ```
 
 ### 6. Word Search with Wildcards
 
-Support `.` as a wildcard matching any character.
+Support `.` as a wildcard matching any character (LeetCode 211).
 
-```go
-func (t *Trie) SearchWithWildcard(word string) bool {
-    return searchHelper(t.Root, word, 0)
+```java
+boolean searchWithWildcard(String word) {
+    return searchHelper(root, word, 0);
 }
 
-func searchHelper(node *TrieNode, word string, index int) bool {
-    if index == len(word) {
-        return node.IsEnd
-    }
-
-    ch := rune(word[index])
-    if ch == '.' {
+boolean searchHelper(TrieNode node, String word, int index) {
+    if (index == word.length()) return node.isEnd;
+    char c = word.charAt(index);
+    if (c == '.') {
         // Try all possible children
-        for _, child := range node.Children {
-            if searchHelper(child, word, index+1) {
-                return true
-            }
+        for (TrieNode child : node.children) {
+            if (child != null && searchHelper(child, word, index + 1)) return true;
         }
-        return false
+        return false;
     } else {
-        if child, ok := node.Children[ch]; ok {
-            return searchHelper(child, word, index+1)
-        }
-        return false
+        TrieNode child = node.children[c - 'a'];
+        return child != null && searchHelper(child, word, index + 1);
     }
 }
 ```
@@ -190,27 +179,27 @@ func searchHelper(node *TrieNode, word string, index int) bool {
 
 Find the prefix node, then DFS to collect all words.
 
-```go
-func (t *Trie) Autocomplete(prefix string) []string {
-    node := t.Root
-    for _, ch := range prefix {
-        if _, ok := node.Children[ch]; !ok {
-            return nil  // prefix not found
-        }
-        node = node.Children[ch]
+```java
+List<String> autocomplete(String prefix) {
+    TrieNode node = root;
+    for (char c : prefix.toCharArray()) {
+        int i = c - 'a';
+        if (node.children[i] == null) return new ArrayList<>();
+        node = node.children[i];
     }
-
-    results := []string{}
-    collectWords(node, prefix, &results)
-    return results
+    List<String> results = new ArrayList<>();
+    collectWords(node, new StringBuilder(prefix), results);
+    return results;
 }
 
-func collectWords(node *TrieNode, currentWord string, results *[]string) {
-    if node.IsEnd {
-        *results = append(*results, currentWord)
-    }
-    for ch, child := range node.Children {
-        collectWords(child, currentWord+string(ch), results)
+void collectWords(TrieNode node, StringBuilder current, List<String> results) {
+    if (node.isEnd) results.add(current.toString());
+    for (int i = 0; i < 26; i++) {
+        if (node.children[i] != null) {
+            current.append((char) ('a' + i));
+            collectWords(node.children[i], current, results);
+            current.deleteCharAt(current.length() - 1);  // backtrack
+        }
     }
 }
 ```
@@ -219,55 +208,36 @@ func collectWords(node *TrieNode, currentWord string, results *[]string) {
 
 Use a trie to store the dictionary, then backtrack on the grid.
 
-```go
-func findWords(board [][]byte, words []string) []string {
-    // Build trie from words
-    trie := NewTrie()
-    for _, word := range words {
-        trie.Insert(word)
-    }
+```java
+List<String> findWords(char[][] board, String[] words) {
+    Trie trie = new Trie();
+    for (String word : words) trie.insert(word);
 
-    results := make(map[string]bool)
-    m, n := len(board), len(board[0])
+    Set<String> found = new HashSet<>();
+    int m = board.length, n = board[0].length;
 
-    var backtrack func(i, j int, node *TrieNode, path string)
-    backtrack = func(i, j int, node *TrieNode, path string) {
-        if i < 0 || i >= m || j < 0 || j >= n {
-            return
-        }
-        ch := rune(board[i][j])
-        if ch == '#' || node.Children[ch] == nil {
-            return
-        }
-
-        node = node.Children[ch]
-        path += string(ch)
-
-        if node.IsEnd {
-            results[path] = true
-            // Don't return; continue to find longer words
-        }
-
-        // Mark as visited
-        board[i][j] = '#'
-        backtrack(i+1, j, node, path)
-        backtrack(i-1, j, node, path)
-        backtrack(i, j+1, node, path)
-        backtrack(i, j-1, node, path)
-        board[i][j] = byte(ch)  // unmark
-    }
-
-    for i := 0; i < m; i++ {
-        for j := 0; j < n; j++ {
-            backtrack(i, j, trie.Root, "")
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            backtrack(board, i, j, trie.root, new StringBuilder(), found);
         }
     }
+    return new ArrayList<>(found);
+}
 
-    result := []string{}
-    for word := range results {
-        result = append(result, word)
-    }
-    return result
+void backtrack(char[][] board, int i, int j, TrieNode node, StringBuilder path, Set<String> found) {
+    if (i < 0 || i >= board.length || j < 0 || j >= board[0].length) return;
+    char c = board[i][j];
+    if (c == '#' || node.children[c - 'a'] == null) return;
+
+    node = node.children[c - 'a'];
+    path.append(c);
+    if (node.isEnd) found.add(path.toString());
+
+    board[i][j] = '#';  // mark as visited
+    int[][] dirs = {{1,0},{-1,0},{0,1},{0,-1}};
+    for (int[] d : dirs) backtrack(board, i + d[0], j + d[1], node, path, found);
+    board[i][j] = c;    // unmark
+    path.deleteCharAt(path.length() - 1);  // backtrack
 }
 ```
 
@@ -277,38 +247,33 @@ func findWords(board [][]byte, words []string) []string {
 
 | Scenario | Use Trie? | Alternative |
 |----------|-----------|-------------|
-| Autocomplete / prefix search | Yes | Hash map (inefficient for prefix queries) |
-| Dictionary with prefix queries | Yes | Sorted array + binary search (less efficient) |
-| Spell checker | Yes | - |
-| IP routing (longest prefix match) | Yes | - |
+| Autocomplete / prefix search | Yes | HashMap (inefficient for prefix queries) |
+| Dictionary with prefix queries | Yes | Sorted array + binary search |
+| Spell checker | Yes | -- |
 | Word search in grid | Yes | Brute force DFS with hash set (slower) |
-| Fixed set of words, no prefix queries | No | Hash set (simpler, faster lookup) |
-| Substring search (not prefix) | No | Use suffix tree or suffix array |
-| Single word lookup | No | Hash map (O(1) vs O(m)) |
+| Fixed set of words, no prefix queries | No | HashSet (simpler, faster lookup) |
+| Substring search (not prefix) | No | Use suffix tree or KMP |
+| Single word lookup | No | HashMap (O(1) vs O(m)) |
 
 ---
 
 ## Common Pitfalls
 
-1. **Forgetting `IsEnd` flag.** "app" and "apple" are different words. Without `IsEnd`, you can't distinguish whether a path is a prefix or a complete word.
+1. **Forgetting `isEnd` flag.** "app" and "apple" are different words. Without `isEnd`, you can't distinguish whether a path is a prefix or a complete word.
 
-2. **Using `[26]*TrieNode` with non-lowercase input.** If the input has uppercase or special characters, this array indexing breaks. Use `map[rune]*TrieNode` for flexibility.
+2. **Using `TrieNode[26]` with non-lowercase input.** If the input has uppercase or special characters, `c - 'a'` gives wrong or negative indices. Use `Map<Character, TrieNode>` for flexibility.
 
-3. **Not initializing children map.** When creating a new node, you must initialize `Children: make(map[rune]*TrieNode)`. Forgetting this causes nil map writes.
+3. **Not backtracking `StringBuilder`.** In autocomplete or Word Search II, remember to remove the last character before returning from recursion (`sb.deleteCharAt(sb.length() - 1)`).
 
-4. **Memory explosion with sparse tries.** If you store unrelated words (e.g., "a", "zzz"), a fixed array wastes memory. Use a map for sparse data.
+4. **Confusing `search` vs `startsWith`.** `search("app")` on a trie containing only "apple" returns `false` (not a complete word). `startsWith("app")` returns `true`.
 
-5. **Confusing search vs prefix search.** `Search("app")` on trie containing "apple" should return false (not a complete word). `StartsWith("app")` returns true.
+5. **Not handling empty string.** Decide if empty string is valid. If yes, check `root.isEnd`.
 
-6. **Not handling empty string.** Decide if empty string is valid. If yes, check `root.IsEnd`.
-
-7. **Infinite loops in backtracking.** In Word Search II, mark cells as visited (`board[i][j] = '#'`) and unmark after recursion. Forgetting to unmark causes bugs.
+6. **Forgetting to unmark visited cells.** In Word Search II, mark cells as visited (`'#'`) and unmark after recursion. Forgetting to unmark causes missing valid paths.
 
 ---
 
 ## Interview Relevance
-
-Tries are less common than arrays or trees but appear in high-value problems.
 
 | Pattern | Signal Words | Example Problems |
 |---------|--------------|------------------|
@@ -316,10 +281,7 @@ Tries are less common than arrays or trees but appear in high-value problems.
 | Wildcard search | "wildcard", "regex", "pattern matching" | Design Add and Search Words Data Structure |
 | Word search in grid | "word search", "grid", "dictionary" | Word Search II |
 | Autocomplete | "autocomplete", "suggestions", "prefix" | Design Search Autocomplete System |
-| Longest prefix | "longest common prefix", "shared prefix" | Longest Common Prefix |
 | Replace words | "replace", "root", "dictionary" | Replace Words |
-
-**Interview Insight:** If the problem mentions "prefix", immediately consider a trie. Tries turn O(n * m) string comparisons into O(m) path walks.
 
 ---
 
@@ -332,56 +294,22 @@ Tries are less common than arrays or trees but appear in high-value problems.
 | 3 | Word Search II | Hard | Backtracking + trie | 212 |
 | 4 | Longest Word in Dictionary | Medium | Build trie, DFS for longest | 720 |
 | 5 | Replace Words | Medium | Trie to find shortest root | 648 |
-| 6 | Implement Magic Dictionary | Medium | Trie with single-char mismatch | 676 |
 
-Start with problem 1 to master basic operations. Problem 2 adds wildcards. Problem 3 is the classic trie + backtracking combo, testing both trie and DFS skills.
-
----
-
-## Array vs Map Implementation
-
-```go
-// Map-based (flexible, slower, sparse-friendly)
-type TrieNode struct {
-    Children map[rune]*TrieNode
-    IsEnd    bool
-}
-
-// Array-based (fast, fixed, lowercase a-z only)
-type TrieNode struct {
-    Children [26]*TrieNode
-    IsEnd    bool
-}
-
-// Convert char to index: ch - 'a'
-// Example:
-if node.Children[ch-'a'] == nil {
-    node.Children[ch-'a'] = &TrieNode{}
-}
-node = node.Children[ch-'a']
-```
-
-**When to use which:**
-- Map: Unicode support, sparse data, unknown alphabet size
-- Array: Maximum performance, lowercase English only
+Start with problem 1 to master basic operations. Problem 2 adds wildcards. Problem 3 is the classic trie + backtracking combo.
 
 ---
 
 ## Quick Reference Card
 
 ```
-Define:     type TrieNode struct { Children map[rune]*TrieNode; IsEnd bool }
-Create:     trie := &Trie{Root: &TrieNode{Children: make(map[rune]*TrieNode)}}
-Insert:     Walk path, create nodes as needed, set IsEnd=true at end
-Search:     Walk path, check IsEnd at final node
-Prefix:     Walk path, return true if path exists (ignore IsEnd)
-Delete:     Set IsEnd=false, optionally prune childless nodes
-Wildcard:   DFS with '.' matching any character
+Node:       class TrieNode { TrieNode[] children = new TrieNode[26]; boolean isEnd; }
+Create:     TrieNode root = new TrieNode();
+Insert:     Walk path using c - 'a' index, create nodes as needed, set isEnd=true
+Search:     Walk path, return node.isEnd at final node
+Prefix:     Walk path, return true if path exists (ignore isEnd)
+Wildcard:   DFS with '.' trying all non-null children
+Autocomplete: Walk to prefix node, DFS with StringBuilder (backtrack on return)
 
-Space:      O(ALPHABET_SIZE * N * M) worst case, better with shared prefixes
+Space:      O(ALPHABET_SIZE * N * M) worst, better with shared prefixes
 Time:       O(m) for all operations (m = word length)
 ```
-
----
-
-> **Key Insight:** Tries are the ultimate prefix-search structure. The cost is O(m) regardless of dictionary size. When you see "prefix", "autocomplete", or "word search with dictionary", think trie. Don't forget the `IsEnd` flag to distinguish prefixes from complete words.

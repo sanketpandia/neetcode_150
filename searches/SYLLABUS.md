@@ -1,6 +1,6 @@
 # Searching Algorithms Syllabus
 
-A comprehensive reference for every searching algorithm and search-based technique you need for coding interviews and the NeetCode 150. Each section covers the concept, time/space complexity, when to use it, Go pseudocode, common pitfalls, and NeetCode relevance.
+A comprehensive reference for every searching algorithm and search-based technique you need for coding interviews and the NeetCode 150. Each section covers the concept, time/space complexity, when to use it, Java implementation, common pitfalls, and NeetCode relevance.
 
 ---
 
@@ -42,16 +42,14 @@ The simplest search: scan every element one by one until you find the target or 
 **Time Complexity:** O(n)
 **Space Complexity:** O(1)
 
-**Go Implementation:**
+**Java Implementation:**
 
-```go
-func linearSearch(arr []int, target int) int {
-    for i, v := range arr {
-        if v == target {
-            return i
-        }
+```java
+int linearSearch(int[] arr, int target) {
+    for (int i = 0; i < arr.length; i++) {
+        if (arr[i] == target) return i;
     }
-    return -1 // not found
+    return -1; // not found
 }
 ```
 
@@ -82,20 +80,16 @@ Binary search works on sorted data by repeatedly halving the search space. Compa
 
 ### 2.1 Standard Binary Search
 
-```go
-func binarySearch(arr []int, target int) int {
-    lo, hi := 0, len(arr)-1
-    for lo <= hi {
-        mid := lo + (hi-lo)/2 // avoids integer overflow
-        if arr[mid] == target {
-            return mid
-        } else if arr[mid] < target {
-            lo = mid + 1
-        } else {
-            hi = mid - 1
-        }
+```java
+int binarySearch(int[] arr, int target) {
+    int lo = 0, hi = arr.length - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2; // avoids integer overflow
+        if (arr[mid] == target) return mid;
+        else if (arr[mid] < target) lo = mid + 1;
+        else hi = mid - 1;
     }
-    return -1
+    return -1;
 }
 ```
 
@@ -103,18 +97,15 @@ func binarySearch(arr []int, target int) int {
 
 Find the first position where `arr[i] >= target`:
 
-```go
-func lowerBound(arr []int, target int) int {
-    lo, hi := 0, len(arr)
-    for lo < hi {
-        mid := lo + (hi-lo)/2
-        if arr[mid] < target {
-            lo = mid + 1
-        } else {
-            hi = mid
-        }
+```java
+int lowerBound(int[] arr, int target) {
+    int lo = 0, hi = arr.length;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (arr[mid] < target) lo = mid + 1;
+        else hi = mid;
     }
-    return lo // first index where arr[i] >= target
+    return lo; // first index where arr[i] >= target
 }
 ```
 
@@ -122,18 +113,15 @@ func lowerBound(arr []int, target int) int {
 
 Find the first position where `arr[i] > target`:
 
-```go
-func upperBound(arr []int, target int) int {
-    lo, hi := 0, len(arr)
-    for lo < hi {
-        mid := lo + (hi-lo)/2
-        if arr[mid] <= target {
-            lo = mid + 1
-        } else {
-            hi = mid
-        }
+```java
+int upperBound(int[] arr, int target) {
+    int lo = 0, hi = arr.length;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (arr[mid] <= target) lo = mid + 1;
+        else hi = mid;
     }
-    return lo // first index where arr[i] > target
+    return lo; // first index where arr[i] > target
 }
 ```
 
@@ -141,31 +129,24 @@ func upperBound(arr []int, target int) int {
 
 A sorted array rotated at some pivot (e.g., `[4,5,6,7,0,1,2]`). One half is always sorted:
 
-```go
-func searchRotated(nums []int, target int) int {
-    lo, hi := 0, len(nums)-1
-    for lo <= hi {
-        mid := lo + (hi-lo)/2
-        if nums[mid] == target {
-            return mid
-        }
+```java
+int searchRotated(int[] nums, int target) {
+    int lo = 0, hi = nums.length - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] == target) return mid;
+
         // Left half is sorted
-        if nums[lo] <= nums[mid] {
-            if nums[lo] <= target && target < nums[mid] {
-                hi = mid - 1
-            } else {
-                lo = mid + 1
-            }
+        if (nums[lo] <= nums[mid]) {
+            if (nums[lo] <= target && target < nums[mid]) hi = mid - 1;
+            else lo = mid + 1;
         } else {
             // Right half is sorted
-            if nums[mid] < target && target <= nums[hi] {
-                lo = mid + 1
-            } else {
-                hi = mid - 1
-            }
+            if (nums[mid] < target && target <= nums[hi]) lo = mid + 1;
+            else hi = mid - 1;
         }
     }
-    return -1
+    return -1;
 }
 ```
 
@@ -173,22 +154,18 @@ func searchRotated(nums []int, target int) int {
 
 Treat the 2D matrix as a flat sorted array:
 
-```go
-func searchMatrix(matrix [][]int, target int) bool {
-    rows, cols := len(matrix), len(matrix[0])
-    lo, hi := 0, rows*cols-1
-    for lo <= hi {
-        mid := lo + (hi-lo)/2
-        val := matrix[mid/cols][mid%cols]
-        if val == target {
-            return true
-        } else if val < target {
-            lo = mid + 1
-        } else {
-            hi = mid - 1
-        }
+```java
+boolean searchMatrix(int[][] matrix, int target) {
+    int rows = matrix.length, cols = matrix[0].length;
+    int lo = 0, hi = rows * cols - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        int val = matrix[mid / cols][mid % cols];
+        if (val == target) return true;
+        else if (val < target) lo = mid + 1;
+        else hi = mid - 1;
     }
-    return false
+    return false;
 }
 ```
 
@@ -196,39 +173,47 @@ func searchMatrix(matrix [][]int, target int) bool {
 
 Sometimes you don't search an array -- you binary search on the answer space. Example: "What is the minimum capacity to ship packages in D days?"
 
-```go
-func shipWithinDays(weights []int, days int) int {
-    lo, hi := maxElement(weights), sum(weights)
-    for lo < hi {
-        mid := lo + (hi-lo)/2
-        if canShip(weights, days, mid) {
-            hi = mid
-        } else {
-            lo = mid + 1
-        }
+```java
+int shipWithinDays(int[] weights, int days) {
+    int lo = max(weights), hi = sum(weights);
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (canShip(weights, days, mid)) hi = mid;
+        else lo = mid + 1;
     }
-    return lo
+    return lo;
+}
+
+boolean canShip(int[] weights, int days, int capacity) {
+    int daysNeeded = 1, currentLoad = 0;
+    for (int w : weights) {
+        if (currentLoad + w > capacity) {
+            daysNeeded++;
+            currentLoad = 0;
+        }
+        currentLoad += w;
+    }
+    return daysNeeded <= days;
 }
 ```
 
-**Go Standard Library:**
+**Java Standard Library:**
 
-```go
-import "sort"
+```java
+// Arrays.binarySearch returns the index if found,
+// or -(insertion point) - 1 if not found
+int idx = Arrays.binarySearch(sorted, target);
+if (idx < 0) {
+    int insertionPoint = -(idx + 1); // where it would be inserted
+}
 
-// sort.Search returns the smallest index i in [0, n) where f(i) is true
-// This is equivalent to lower bound
-idx := sort.Search(len(arr), func(i int) bool {
-    return arr[i] >= target
-})
-
-// sort.SearchInts is a convenience wrapper
-idx := sort.SearchInts(arr, target)
+// For a List
+int idx = Collections.binarySearch(list, target);
 ```
 
 **Common Pitfalls:**
 - Off-by-one: `lo <= hi` vs `lo < hi` -- depends on whether `hi` is inclusive or exclusive
-- Integer overflow: use `lo + (hi-lo)/2` instead of `(lo+hi)/2`
+- Integer overflow: use `lo + (hi - lo) / 2` instead of `(lo + hi) / 2`
 - Not handling duplicates: standard binary search finds *any* occurrence, not first/last
 - Infinite loops: make sure `lo` or `hi` changes every iteration
 
@@ -252,54 +237,40 @@ Use two pointers (indices) to traverse the data structure, typically from both e
 
 Start one pointer at the beginning and one at the end. Move them toward each other.
 
-```go
+```java
 // Two Sum II (sorted array)
-func twoSumSorted(numbers []int, target int) []int {
-    lo, hi := 0, len(numbers)-1
-    for lo < hi {
-        sum := numbers[lo] + numbers[hi]
-        if sum == target {
-            return []int{lo, hi}
-        } else if sum < target {
-            lo++
-        } else {
-            hi--
-        }
+int[] twoSumSorted(int[] numbers, int target) {
+    int lo = 0, hi = numbers.length - 1;
+    while (lo < hi) {
+        int sum = numbers[lo] + numbers[hi];
+        if (sum == target) return new int[]{lo, hi};
+        else if (sum < target) lo++;
+        else hi--;
     }
-    return []int{} // no solution
+    return new int[]{}; // no solution
 }
 
 // Valid Palindrome
-func isPalindrome(s string) bool {
-    lo, hi := 0, len(s)-1
-    for lo < hi {
-        if s[lo] != s[hi] {
-            return false
-        }
-        lo++
-        hi--
+boolean isPalindrome(String s) {
+    int lo = 0, hi = s.length() - 1;
+    while (lo < hi) {
+        if (s.charAt(lo) != s.charAt(hi)) return false;
+        lo++;
+        hi--;
     }
-    return true
+    return true;
 }
 
 // Container With Most Water
-func maxArea(height []int) int {
-    lo, hi := 0, len(height)-1
-    best := 0
-    for lo < hi {
-        w := hi - lo
-        h := min(height[lo], height[hi])
-        area := w * h
-        if area > best {
-            best = area
-        }
-        if height[lo] < height[hi] {
-            lo++
-        } else {
-            hi--
-        }
+int maxArea(int[] height) {
+    int lo = 0, hi = height.length - 1, best = 0;
+    while (lo < hi) {
+        int area = (hi - lo) * Math.min(height[lo], height[hi]);
+        best = Math.max(best, area);
+        if (height[lo] < height[hi]) lo++;
+        else hi--;
     }
-    return best
+    return best;
 }
 ```
 
@@ -307,33 +278,29 @@ func maxArea(height []int) int {
 
 Both pointers start at the beginning. The fast pointer moves ahead; the slow pointer tracks a condition.
 
-```go
+```java
 // Remove duplicates in-place from sorted array
-func removeDuplicates(nums []int) int {
-    if len(nums) == 0 {
-        return 0
-    }
-    slow := 0
-    for fast := 1; fast < len(nums); fast++ {
-        if nums[fast] != nums[slow] {
-            slow++
-            nums[slow] = nums[fast]
+int removeDuplicates(int[] nums) {
+    if (nums.length == 0) return 0;
+    int slow = 0;
+    for (int fast = 1; fast < nums.length; fast++) {
+        if (nums[fast] != nums[slow]) {
+            slow++;
+            nums[slow] = nums[fast];
         }
     }
-    return slow + 1
+    return slow + 1;
 }
 
 // Linked list cycle detection (Floyd's algorithm)
-func hasCycle(head *ListNode) bool {
-    slow, fast := head, head
-    for fast != nil && fast.Next != nil {
-        slow = slow.Next
-        fast = fast.Next.Next
-        if slow == fast {
-            return true
-        }
+boolean hasCycle(ListNode head) {
+    ListNode slow = head, fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+        if (slow == fast) return true;
     }
-    return false
+    return false;
 }
 ```
 
@@ -341,31 +308,31 @@ func hasCycle(head *ListNode) bool {
 
 Fix one pointer, then use two pointers on the remainder:
 
-```go
-func threeSum(nums []int) [][]int {
-    sort.Ints(nums)
-    result := [][]int{}
-    for i := 0; i < len(nums)-2; i++ {
-        if i > 0 && nums[i] == nums[i-1] {
-            continue // skip duplicates
-        }
-        lo, hi := i+1, len(nums)-1
-        for lo < hi {
-            sum := nums[i] + nums[lo] + nums[hi]
-            if sum == 0 {
-                result = append(result, []int{nums[i], nums[lo], nums[hi]})
-                for lo < hi && nums[lo] == nums[lo+1] { lo++ }
-                for lo < hi && nums[hi] == nums[hi-1] { hi-- }
-                lo++
-                hi--
-            } else if sum < 0 {
-                lo++
+```java
+List<List<Integer>> threeSum(int[] nums) {
+    Arrays.sort(nums);
+    List<List<Integer>> result = new ArrayList<>();
+
+    for (int i = 0; i < nums.length - 2; i++) {
+        if (i > 0 && nums[i] == nums[i - 1]) continue; // skip duplicates
+
+        int lo = i + 1, hi = nums.length - 1;
+        while (lo < hi) {
+            int sum = nums[i] + nums[lo] + nums[hi];
+            if (sum == 0) {
+                result.add(Arrays.asList(nums[i], nums[lo], nums[hi]));
+                while (lo < hi && nums[lo] == nums[lo + 1]) lo++;
+                while (lo < hi && nums[hi] == nums[hi - 1]) hi--;
+                lo++;
+                hi--;
+            } else if (sum < 0) {
+                lo++;
             } else {
-                hi--
+                hi--;
             }
         }
     }
-    return result
+    return result;
 }
 ```
 
@@ -401,24 +368,20 @@ A sliding window maintains a "window" (contiguous subarray/substring) that expan
 
 Window size is known in advance. Slide it across the array.
 
-```go
+```java
 // Maximum sum of subarray of size k
-func maxSumSubarray(arr []int, k int) int {
+int maxSumSubarray(int[] arr, int k) {
+    int windowSum = 0;
     // Build first window
-    windowSum := 0
-    for i := 0; i < k; i++ {
-        windowSum += arr[i]
-    }
-    best := windowSum
+    for (int i = 0; i < k; i++) windowSum += arr[i];
+    int best = windowSum;
 
     // Slide the window
-    for i := k; i < len(arr); i++ {
-        windowSum += arr[i] - arr[i-k]  // add new, remove old
-        if windowSum > best {
-            best = windowSum
-        }
+    for (int i = k; i < arr.length; i++) {
+        windowSum += arr[i] - arr[i - k]; // add new, remove old
+        best = Math.max(best, windowSum);
     }
-    return best
+    return best;
 }
 ```
 
@@ -426,66 +389,56 @@ func maxSumSubarray(arr []int, k int) int {
 
 Window expands until a condition is violated, then contracts from the left.
 
-```go
+```java
 // Longest substring without repeating characters
-func lengthOfLongestSubstring(s string) int {
-    charIndex := make(map[byte]int) // last seen index
-    best := 0
-    left := 0
+int lengthOfLongestSubstring(String s) {
+    Map<Character, Integer> charIndex = new HashMap<>(); // last seen index
+    int best = 0, left = 0;
 
-    for right := 0; right < len(s); right++ {
-        if idx, ok := charIndex[s[right]]; ok && idx >= left {
-            left = idx + 1 // shrink window past the duplicate
+    for (int right = 0; right < s.length(); right++) {
+        char c = s.charAt(right);
+        if (charIndex.containsKey(c) && charIndex.get(c) >= left) {
+            left = charIndex.get(c) + 1; // shrink window past the duplicate
         }
-        charIndex[s[right]] = right
-        if right-left+1 > best {
-            best = right - left + 1
-        }
+        charIndex.put(c, right);
+        best = Math.max(best, right - left + 1);
     }
-    return best
+    return best;
 }
 
 // Minimum window substring
-func minWindow(s string, t string) string {
-    need := make(map[byte]int)
-    for i := 0; i < len(t); i++ {
-        need[t[i]]++
-    }
+String minWindow(String s, String t) {
+    Map<Character, Integer> need = new HashMap<>();
+    for (char c : t.toCharArray()) need.merge(c, 1, Integer::sum);
 
-    have := make(map[byte]int)
-    formed := 0
-    required := len(need)
-    bestLen := len(s) + 1
-    bestStart := 0
-    left := 0
+    Map<Character, Integer> have = new HashMap<>();
+    int formed = 0, required = need.size();
+    int bestLen = Integer.MAX_VALUE, bestStart = 0;
+    int left = 0;
 
-    for right := 0; right < len(s); right++ {
-        ch := s[right]
-        have[ch]++
-        if have[ch] == need[ch] {
-            formed++
+    for (int right = 0; right < s.length(); right++) {
+        char ch = s.charAt(right);
+        have.merge(ch, 1, Integer::sum);
+        if (need.containsKey(ch) && have.get(ch).equals(need.get(ch))) {
+            formed++;
         }
 
         // Contract window from left
-        for formed == required {
-            // Update best
-            if right-left+1 < bestLen {
-                bestLen = right - left + 1
-                bestStart = left
+        while (formed == required) {
+            if (right - left + 1 < bestLen) {
+                bestLen = right - left + 1;
+                bestStart = left;
             }
-            leftCh := s[left]
-            have[leftCh]--
-            if have[leftCh] < need[leftCh] {
-                formed--
+            char leftCh = s.charAt(left);
+            have.merge(leftCh, -1, Integer::sum);
+            if (need.containsKey(leftCh) && have.get(leftCh) < need.get(leftCh)) {
+                formed--;
             }
-            left++
+            left++;
         }
     }
 
-    if bestLen > len(s) {
-        return ""
-    }
-    return s[bestStart : bestStart+bestLen]
+    return bestLen == Integer.MAX_VALUE ? "" : s.substring(bestStart, bestStart + bestLen);
 }
 ```
 
@@ -493,22 +446,22 @@ func minWindow(s string, t string) string {
 
 Most variable-size window problems follow this template:
 
-```go
-func slidingWindow(arr []int) int {
-    left := 0
+```java
+int slidingWindow(int[] arr) {
+    int left = 0;
     // state variables (sum, count map, etc.)
 
-    for right := 0; right < len(arr); right++ {
+    for (int right = 0; right < arr.length; right++) {
         // Expand: add arr[right] to window state
 
-        for /* window is invalid */ {
+        while (/* window is invalid */) {
             // Contract: remove arr[left] from window state
-            left++
+            left++;
         }
 
         // Update answer (depends on whether you want max or min window)
     }
-    return answer
+    return answer;
 }
 ```
 
@@ -521,6 +474,7 @@ func slidingWindow(arr []int) int {
 **Common Pitfalls:**
 - Confusing when to expand vs contract
 - Not handling the window state correctly when removing elements
+- Using `Integer` instead of `int` in the `have` map and using `==` to compare -- always use `.equals()` for `Integer` objects
 - Using sliding window when the subarray isn't contiguous (use DP instead)
 
 > **Key Insight:** Sliding window is an optimization of the brute-force "check every subarray" approach. If you can express the problem as "find the best contiguous subarray where some condition holds", sliding window likely applies.
@@ -541,107 +495,90 @@ DFS explores as deep as possible along each branch before backtracking. It uses 
 
 ### 5.1 DFS on Trees (Recursive)
 
-```go
+```java
 // Preorder traversal
-func preorder(root *TreeNode) []int {
-    if root == nil {
-        return nil
-    }
-    result := []int{root.Val}
-    result = append(result, preorder(root.Left)...)
-    result = append(result, preorder(root.Right)...)
-    return result
+List<Integer> preorder(TreeNode root) {
+    List<Integer> result = new ArrayList<>();
+    if (root == null) return result;
+    result.add(root.val);
+    result.addAll(preorder(root.left));
+    result.addAll(preorder(root.right));
+    return result;
 }
 
 // Max depth of binary tree
-func maxDepth(root *TreeNode) int {
-    if root == nil {
-        return 0
-    }
-    left := maxDepth(root.Left)
-    right := maxDepth(root.Right)
-    if left > right {
-        return left + 1
-    }
-    return right + 1
+int maxDepth(TreeNode root) {
+    if (root == null) return 0;
+    return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));
 }
 ```
 
 ### 5.2 DFS on Trees (Iterative with Stack)
 
-```go
-func preorderIterative(root *TreeNode) []int {
-    if root == nil {
-        return nil
-    }
-    result := []int{}
-    stack := []*TreeNode{root}
+```java
+List<Integer> preorderIterative(TreeNode root) {
+    List<Integer> result = new ArrayList<>();
+    if (root == null) return result;
 
-    for len(stack) > 0 {
-        node := stack[len(stack)-1]
-        stack = stack[:len(stack)-1]
-        result = append(result, node.Val)
+    Deque<TreeNode> stack = new ArrayDeque<>();
+    stack.push(root);
+
+    while (!stack.isEmpty()) {
+        TreeNode node = stack.pop();
+        result.add(node.val);
         // Push right first so left is processed first (LIFO)
-        if node.Right != nil {
-            stack = append(stack, node.Right)
-        }
-        if node.Left != nil {
-            stack = append(stack, node.Left)
-        }
+        if (node.right != null) stack.push(node.right);
+        if (node.left != null) stack.push(node.left);
     }
-    return result
+    return result;
 }
 ```
 
 ### 5.3 DFS on Graphs
 
-```go
+```java
 // DFS traversal of a graph (adjacency list)
-func dfsGraph(graph map[int][]int, start int) []int {
-    visited := make(map[int]bool)
-    result := []int{}
+List<Integer> dfsGraph(Map<Integer, List<Integer>> graph, int start) {
+    Set<Integer> visited = new HashSet<>();
+    List<Integer> result = new ArrayList<>();
+    dfs(graph, start, visited, result);
+    return result;
+}
 
-    var dfs func(node int)
-    dfs = func(node int) {
-        visited[node] = true
-        result = append(result, node)
-        for _, neighbor := range graph[node] {
-            if !visited[neighbor] {
-                dfs(neighbor)
-            }
+void dfs(Map<Integer, List<Integer>> graph, int node,
+         Set<Integer> visited, List<Integer> result) {
+    visited.add(node);
+    result.add(node);
+    for (int neighbor : graph.getOrDefault(node, Collections.emptyList())) {
+        if (!visited.contains(neighbor)) {
+            dfs(graph, neighbor, visited, result);
         }
     }
-
-    dfs(start)
-    return result
 }
 
 // Number of islands (2D grid DFS)
-func numIslands(grid [][]byte) int {
-    rows, cols := len(grid), len(grid[0])
-    count := 0
+int numIslands(char[][] grid) {
+    int rows = grid.length, cols = grid[0].length, count = 0;
 
-    var dfs func(r, c int)
-    dfs = func(r, c int) {
-        if r < 0 || r >= rows || c < 0 || c >= cols || grid[r][c] == '0' {
-            return
-        }
-        grid[r][c] = '0' // mark visited
-        dfs(r+1, c)
-        dfs(r-1, c)
-        dfs(r, c+1)
-        dfs(r, c-1)
-    }
-
-    for r := 0; r < rows; r++ {
-        for c := 0; c < cols; c++ {
-            if grid[r][c] == '1' {
-                count++
-                dfs(r, c)
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            if (grid[r][c] == '1') {
+                count++;
+                dfsIsland(grid, r, c);
             }
         }
     }
-    return count
+    return count;
+}
+
+void dfsIsland(char[][] grid, int r, int c) {
+    if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length || grid[r][c] == '0')
+        return;
+    grid[r][c] = '0'; // mark visited
+    dfsIsland(grid, r + 1, c);
+    dfsIsland(grid, r - 1, c);
+    dfsIsland(grid, r, c + 1);
+    dfsIsland(grid, r, c - 1);
 }
 ```
 
@@ -649,51 +586,44 @@ func numIslands(grid [][]byte) int {
 
 Backtracking builds solutions incrementally, abandoning a path as soon as it's invalid.
 
-```go
+```java
 // Generate all subsets
-func subsets(nums []int) [][]int {
-    result := [][]int{}
-    current := []int{}
+List<List<Integer>> subsets(int[] nums) {
+    List<List<Integer>> result = new ArrayList<>();
+    backtrack(nums, 0, new ArrayList<>(), result);
+    return result;
+}
 
-    var backtrack func(start int)
-    backtrack = func(start int) {
-        // Make a copy and add to result
-        temp := make([]int, len(current))
-        copy(temp, current)
-        result = append(result, temp)
+void backtrack(int[] nums, int start, List<Integer> current,
+               List<List<Integer>> result) {
+    result.add(new ArrayList<>(current)); // make a copy
 
-        for i := start; i < len(nums); i++ {
-            current = append(current, nums[i])   // choose
-            backtrack(i + 1)                       // explore
-            current = current[:len(current)-1]     // undo
-        }
+    for (int i = start; i < nums.length; i++) {
+        current.add(nums[i]);       // choose
+        backtrack(nums, i + 1, current, result); // explore
+        current.remove(current.size() - 1);      // undo
     }
-
-    backtrack(0)
-    return result
 }
 
 // Permutations
-func permute(nums []int) [][]int {
-    result := [][]int{}
+List<List<Integer>> permute(int[] nums) {
+    List<List<Integer>> result = new ArrayList<>();
+    permuteHelper(nums, 0, result);
+    return result;
+}
 
-    var backtrack func(start int)
-    backtrack = func(start int) {
-        if start == len(nums) {
-            temp := make([]int, len(nums))
-            copy(temp, nums)
-            result = append(result, temp)
-            return
-        }
-        for i := start; i < len(nums); i++ {
-            nums[start], nums[i] = nums[i], nums[start]   // swap
-            backtrack(start + 1)
-            nums[start], nums[i] = nums[i], nums[start]   // undo swap
-        }
+void permuteHelper(int[] nums, int start, List<List<Integer>> result) {
+    if (start == nums.length) {
+        List<Integer> perm = new ArrayList<>();
+        for (int n : nums) perm.add(n);
+        result.add(perm);
+        return;
     }
-
-    backtrack(0)
-    return result
+    for (int i = start; i < nums.length; i++) {
+        int tmp = nums[start]; nums[start] = nums[i]; nums[i] = tmp; // swap
+        permuteHelper(nums, start + 1, result);
+        tmp = nums[start]; nums[start] = nums[i]; nums[i] = tmp;     // undo swap
+    }
 }
 ```
 
@@ -701,47 +631,38 @@ func permute(nums []int) [][]int {
 
 Order nodes in a DAG so all edges point forward:
 
-```go
-func topologicalSort(numNodes int, edges [][]int) []int {
-    graph := make(map[int][]int)
-    for _, e := range edges {
-        graph[e[0]] = append(graph[e[0]], e[1])
+```java
+int[] topologicalSort(int numNodes, int[][] edges) {
+    Map<Integer, List<Integer>> graph = new HashMap<>();
+    for (int[] e : edges) {
+        graph.computeIfAbsent(e[0], k -> new ArrayList<>()).add(e[1]);
     }
 
-    visited := make(map[int]int) // 0=unvisited, 1=in-progress, 2=done
-    result := []int{}
-    hasCycle := false
+    int[] visited = new int[numNodes]; // 0=unvisited, 1=in-progress, 2=done
+    List<Integer> result = new ArrayList<>();
+    boolean[] hasCycle = {false};
 
-    var dfs func(node int)
-    dfs = func(node int) {
-        if hasCycle {
-            return
-        }
-        visited[node] = 1 // in-progress
-        for _, neighbor := range graph[node] {
-            if visited[neighbor] == 1 {
-                hasCycle = true // back edge = cycle
-                return
-            }
-            if visited[neighbor] == 0 {
-                dfs(neighbor)
-            }
-        }
-        visited[node] = 2 // done
-        result = append(result, node)
-    }
-
-    for i := 0; i < numNodes; i++ {
-        if visited[i] == 0 {
-            dfs(i)
+    for (int i = 0; i < numNodes; i++) {
+        if (visited[i] == 0) {
+            dfsTopoSort(i, graph, visited, result, hasCycle);
         }
     }
 
-    // Reverse result for topological order
-    for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 {
-        result[i], result[j] = result[j], result[i]
+    if (hasCycle[0]) return new int[0];
+    Collections.reverse(result);
+    return result.stream().mapToInt(Integer::intValue).toArray();
+}
+
+void dfsTopoSort(int node, Map<Integer, List<Integer>> graph,
+                 int[] visited, List<Integer> result, boolean[] hasCycle) {
+    if (hasCycle[0]) return;
+    visited[node] = 1; // in-progress
+    for (int neighbor : graph.getOrDefault(node, Collections.emptyList())) {
+        if (visited[neighbor] == 1) { hasCycle[0] = true; return; }
+        if (visited[neighbor] == 0) dfsTopoSort(neighbor, graph, visited, result, hasCycle);
     }
-    return result
+    visited[node] = 2; // done
+    result.add(node);
 }
 ```
 
@@ -754,8 +675,9 @@ func topologicalSort(numNodes int, edges [][]int) []int {
 
 **Common Pitfalls:**
 - Forgetting visited tracking in graphs (infinite loops on cycles)
-- Stack overflow on very deep recursion (consider iterative DFS)
-- Not making a copy of the current state before adding to results (backtracking)
+- Stack overflow on very deep recursion -- consider iterative DFS with `ArrayDeque`
+- Not making a deep copy of the current state before adding to results (backtracking)
+- In Java, `current.remove(current.size() - 1)` -- don't use `remove(int)` on a `List<Integer>` with an index, or it will autobox -- use `remove(Integer.valueOf(nums[i]))` carefully, or remove by index
 
 > **Key Insight:** DFS is your Swiss Army knife for exploration. Think recursively: "If I solve this for my children, can I combine to solve for myself?" For graphs, always track visited nodes.
 
@@ -775,99 +697,88 @@ BFS explores all neighbors at the current depth before moving deeper. It uses a 
 
 ### 6.1 BFS on Trees (Level-Order Traversal)
 
-```go
-func levelOrder(root *TreeNode) [][]int {
-    if root == nil {
-        return nil
-    }
-    result := [][]int{}
-    queue := []*TreeNode{root}
+```java
+List<List<Integer>> levelOrder(TreeNode root) {
+    List<List<Integer>> result = new ArrayList<>();
+    if (root == null) return result;
 
-    for len(queue) > 0 {
-        levelSize := len(queue)
-        level := []int{}
-        for i := 0; i < levelSize; i++ {
-            node := queue[0]
-            queue = queue[1:]
-            level = append(level, node.Val)
-            if node.Left != nil {
-                queue = append(queue, node.Left)
-            }
-            if node.Right != nil {
-                queue = append(queue, node.Right)
-            }
+    Queue<TreeNode> queue = new ArrayDeque<>();
+    queue.offer(root);
+
+    while (!queue.isEmpty()) {
+        int size = queue.size(); // snapshot size before processing level
+        List<Integer> level = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            TreeNode node = queue.poll();
+            level.add(node.val);
+            if (node.left != null) queue.offer(node.left);
+            if (node.right != null) queue.offer(node.right);
         }
-        result = append(result, level)
+        result.add(level);
     }
-    return result
+    return result;
 }
 ```
 
 ### 6.2 BFS on Graphs (Shortest Path)
 
-```go
+```java
 // Shortest path in unweighted graph
-func shortestPath(graph map[int][]int, start, end int) int {
-    visited := make(map[int]bool)
-    queue := []int{start}
-    visited[start] = true
-    distance := 0
+int shortestPath(Map<Integer, List<Integer>> graph, int start, int end) {
+    Set<Integer> visited = new HashSet<>();
+    Queue<Integer> queue = new ArrayDeque<>();
+    queue.offer(start);
+    visited.add(start);
+    int distance = 0;
 
-    for len(queue) > 0 {
-        size := len(queue)
-        for i := 0; i < size; i++ {
-            node := queue[0]
-            queue = queue[1:]
-            if node == end {
-                return distance
-            }
-            for _, neighbor := range graph[node] {
-                if !visited[neighbor] {
-                    visited[neighbor] = true
-                    queue = append(queue, neighbor)
+    while (!queue.isEmpty()) {
+        int size = queue.size();
+        for (int i = 0; i < size; i++) {
+            int node = queue.poll();
+            if (node == end) return distance;
+            for (int neighbor : graph.getOrDefault(node, Collections.emptyList())) {
+                if (!visited.contains(neighbor)) {
+                    visited.add(neighbor);
+                    queue.offer(neighbor);
                 }
             }
         }
-        distance++
+        distance++;
     }
-    return -1 // unreachable
+    return -1; // unreachable
 }
 ```
 
 ### 6.3 BFS on Grid
 
-```go
+```java
 // Shortest path in a binary matrix (0 = passable, 1 = blocked)
-func shortestPathGrid(grid [][]int) int {
-    n := len(grid)
-    if grid[0][0] == 1 || grid[n-1][n-1] == 1 {
-        return -1
-    }
+int shortestPathGrid(int[][] grid) {
+    int n = grid.length;
+    if (grid[0][0] == 1 || grid[n - 1][n - 1] == 1) return -1;
 
-    dirs := [][2]int{{0,1},{0,-1},{1,0},{-1,0},{1,1},{1,-1},{-1,1},{-1,-1}}
-    queue := [][2]int{{0, 0}}
-    grid[0][0] = 1 // mark visited
-    dist := 1
+    int[][] dirs = {{0,1},{0,-1},{1,0},{-1,0},{1,1},{1,-1},{-1,1},{-1,-1}};
+    Queue<int[]> queue = new ArrayDeque<>();
+    queue.offer(new int[]{0, 0});
+    grid[0][0] = 1; // mark visited
+    int dist = 1;
 
-    for len(queue) > 0 {
-        size := len(queue)
-        for i := 0; i < size; i++ {
-            cell := queue[0]
-            queue = queue[1:]
-            if cell[0] == n-1 && cell[1] == n-1 {
-                return dist
-            }
-            for _, d := range dirs {
-                nr, nc := cell[0]+d[0], cell[1]+d[1]
-                if nr >= 0 && nr < n && nc >= 0 && nc < n && grid[nr][nc] == 0 {
-                    grid[nr][nc] = 1
-                    queue = append(queue, [2]int{nr, nc})
+    while (!queue.isEmpty()) {
+        int size = queue.size();
+        for (int i = 0; i < size; i++) {
+            int[] cell = queue.poll();
+            if (cell[0] == n - 1 && cell[1] == n - 1) return dist;
+            for (int[] d : dirs) {
+                int nr = cell[0] + d[0], nc = cell[1] + d[1];
+                if (nr >= 0 && nr < n && nc >= 0 && nc < n && grid[nr][nc] == 0) {
+                    grid[nr][nc] = 1;
+                    queue.offer(new int[]{nr, nc});
                 }
             }
         }
-        dist++
+        dist++;
     }
-    return -1
+    return -1;
 }
 ```
 
@@ -875,87 +786,72 @@ func shortestPathGrid(grid [][]int) int {
 
 Start BFS from multiple sources simultaneously (e.g., "rotting oranges"):
 
-```go
-func orangesRotting(grid [][]int) int {
-    rows, cols := len(grid), len(grid[0])
-    queue := [][2]int{}
-    fresh := 0
+```java
+int orangesRotting(int[][] grid) {
+    int rows = grid.length, cols = grid[0].length;
+    Queue<int[]> queue = new ArrayDeque<>();
+    int fresh = 0;
 
     // Enqueue all rotten oranges (multiple sources)
-    for r := 0; r < rows; r++ {
-        for c := 0; c < cols; c++ {
-            if grid[r][c] == 2 {
-                queue = append(queue, [2]int{r, c})
-            } else if grid[r][c] == 1 {
-                fresh++
-            }
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            if (grid[r][c] == 2) queue.offer(new int[]{r, c});
+            else if (grid[r][c] == 1) fresh++;
         }
     }
 
-    dirs := [][2]int{{0,1},{0,-1},{1,0},{-1,0}}
-    minutes := 0
+    int[][] dirs = {{0,1},{0,-1},{1,0},{-1,0}};
+    int minutes = 0;
 
-    for len(queue) > 0 && fresh > 0 {
-        size := len(queue)
-        for i := 0; i < size; i++ {
-            cell := queue[0]
-            queue = queue[1:]
-            for _, d := range dirs {
-                nr, nc := cell[0]+d[0], cell[1]+d[1]
-                if nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc] == 1 {
-                    grid[nr][nc] = 2
-                    fresh--
-                    queue = append(queue, [2]int{nr, nc})
+    while (!queue.isEmpty() && fresh > 0) {
+        int size = queue.size();
+        for (int i = 0; i < size; i++) {
+            int[] cell = queue.poll();
+            for (int[] d : dirs) {
+                int nr = cell[0] + d[0], nc = cell[1] + d[1];
+                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc] == 1) {
+                    grid[nr][nc] = 2;
+                    fresh--;
+                    queue.offer(new int[]{nr, nc});
                 }
             }
         }
-        minutes++
+        minutes++;
     }
 
-    if fresh > 0 {
-        return -1
-    }
-    return minutes
+    return fresh > 0 ? -1 : minutes;
 }
 ```
 
 ### 6.5 Kahn's Algorithm (BFS Topological Sort)
 
-```go
-func topologicalSortBFS(numCourses int, prerequisites [][]int) []int {
-    graph := make(map[int][]int)
-    inDegree := make([]int, numCourses)
+```java
+int[] topologicalSortBFS(int numCourses, int[][] prerequisites) {
+    Map<Integer, List<Integer>> graph = new HashMap<>();
+    int[] inDegree = new int[numCourses];
 
-    for _, pre := range prerequisites {
-        graph[pre[1]] = append(graph[pre[1]], pre[0])
-        inDegree[pre[0]]++
+    for (int[] pre : prerequisites) {
+        graph.computeIfAbsent(pre[1], k -> new ArrayList<>()).add(pre[0]);
+        inDegree[pre[0]]++;
     }
 
     // Start with nodes that have no prerequisites
-    queue := []int{}
-    for i := 0; i < numCourses; i++ {
-        if inDegree[i] == 0 {
-            queue = append(queue, i)
+    Queue<Integer> queue = new ArrayDeque<>();
+    for (int i = 0; i < numCourses; i++) {
+        if (inDegree[i] == 0) queue.offer(i);
+    }
+
+    int[] order = new int[numCourses];
+    int idx = 0;
+    while (!queue.isEmpty()) {
+        int node = queue.poll();
+        order[idx++] = node;
+        for (int neighbor : graph.getOrDefault(node, Collections.emptyList())) {
+            if (--inDegree[neighbor] == 0) queue.offer(neighbor);
         }
     }
 
-    order := []int{}
-    for len(queue) > 0 {
-        node := queue[0]
-        queue = queue[1:]
-        order = append(order, node)
-        for _, neighbor := range graph[node] {
-            inDegree[neighbor]--
-            if inDegree[neighbor] == 0 {
-                queue = append(queue, neighbor)
-            }
-        }
-    }
-
-    if len(order) != numCourses {
-        return nil // cycle exists
-    }
-    return order
+    return idx == numCourses ? order : new int[0]; // empty if cycle exists
 }
 ```
 
@@ -971,8 +867,9 @@ func topologicalSortBFS(numCourses int, prerequisites [][]int) []int {
 
 **Common Pitfalls:**
 - Forgetting to mark nodes as visited BEFORE enqueueing (leads to duplicate entries)
-- Not processing by levels (forgetting the inner `size` loop)
+- Not snapshotting `queue.size()` before the inner loop (the size changes as you enqueue children)
 - Using BFS when DFS would be simpler (e.g., tree traversals)
+- `queue.poll()` returns `null` on empty -- always check `!queue.isEmpty()` or use the size loop
 
 > **Key Insight:** BFS guarantees shortest path in unweighted graphs because it explores in order of distance. If you need "minimum steps", "shortest path", or "nearest X", think BFS.
 
@@ -995,32 +892,25 @@ An optimization of binary search for uniformly distributed sorted data. Instead 
 pos = lo + ((target - arr[lo]) * (hi - lo)) / (arr[hi] - arr[lo])
 ```
 
-**Go Implementation:**
+**Java Implementation:**
 
-```go
-func interpolationSearch(arr []int, target int) int {
-    lo, hi := 0, len(arr)-1
+```java
+int interpolationSearch(int[] arr, int target) {
+    int lo = 0, hi = arr.length - 1;
 
-    for lo <= hi && target >= arr[lo] && target <= arr[hi] {
-        if lo == hi {
-            if arr[lo] == target {
-                return lo
-            }
-            return -1
+    while (lo <= hi && target >= arr[lo] && target <= arr[hi]) {
+        if (lo == hi) {
+            return arr[lo] == target ? lo : -1;
         }
 
         // Estimate position
-        pos := lo + ((target - arr[lo]) * (hi - lo)) / (arr[hi] - arr[lo])
+        int pos = lo + ((target - arr[lo]) * (hi - lo)) / (arr[hi] - arr[lo]);
 
-        if arr[pos] == target {
-            return pos
-        } else if arr[pos] < target {
-            lo = pos + 1
-        } else {
-            hi = pos - 1
-        }
+        if (arr[pos] == target) return pos;
+        else if (arr[pos] < target) lo = pos + 1;
+        else hi = pos - 1;
     }
-    return -1
+    return -1;
 }
 ```
 
@@ -1034,7 +924,7 @@ func interpolationSearch(arr []int, target int) int {
 
 **Common Pitfalls:**
 - Division by zero when `arr[hi] == arr[lo]`
-- Integer overflow in the position calculation
+- Integer overflow in the position calculation -- cast to `long` if values are large
 - Forgetting the bounds check `target >= arr[lo] && target <= arr[hi]`
 
 > **Key Insight:** Interpolation search is a niche optimization. In interviews, binary search is almost always sufficient. Know that interpolation search exists and when it theoretically helps, but don't reach for it by default.
@@ -1053,45 +943,32 @@ Exponential search finds the range where the target might exist by doubling the 
 **Time Complexity:** O(log n)
 **Space Complexity:** O(1)
 
-**Go Implementation:**
+**Java Implementation:**
 
-```go
-func exponentialSearch(arr []int, target int) int {
-    n := len(arr)
-    if n == 0 {
-        return -1
-    }
-    if arr[0] == target {
-        return 0
-    }
+```java
+int exponentialSearch(int[] arr, int target) {
+    int n = arr.length;
+    if (n == 0) return -1;
+    if (arr[0] == target) return 0;
 
     // Find range [bound/2, bound]
-    bound := 1
-    for bound < n && arr[bound] <= target {
-        bound *= 2
-    }
+    int bound = 1;
+    while (bound < n && arr[bound] <= target) bound *= 2;
 
     // Binary search within the range
-    lo := bound / 2
-    hi := bound
-    if hi >= n {
-        hi = n - 1
-    }
-    return binarySearch(arr, target, lo, hi)
+    int lo = bound / 2;
+    int hi = Math.min(bound, n - 1);
+    return binarySearchRange(arr, target, lo, hi);
 }
 
-func binarySearch(arr []int, target, lo, hi int) int {
-    for lo <= hi {
-        mid := lo + (hi-lo)/2
-        if arr[mid] == target {
-            return mid
-        } else if arr[mid] < target {
-            lo = mid + 1
-        } else {
-            hi = mid - 1
-        }
+int binarySearchRange(int[] arr, int target, int lo, int hi) {
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (arr[mid] == target) return mid;
+        else if (arr[mid] < target) lo = mid + 1;
+        else hi = mid - 1;
     }
-    return -1
+    return -1;
 }
 ```
 
@@ -1101,7 +978,7 @@ func binarySearch(arr []int, target, lo, hi int) int {
 - When the target is likely near the beginning
 
 **Common Pitfalls:**
-- Out-of-bounds access when `bound` exceeds array length
+- Out-of-bounds access when `bound` exceeds array length -- cap with `Math.min(bound, n - 1)`
 - Not handling the edge case where `arr[0]` is the target
 
 > **Key Insight:** Exponential search is binary search with an adaptive range-finding step. It's O(log i) where i is the target's position, making it faster than standard binary search when the target is near the start of a very large dataset.

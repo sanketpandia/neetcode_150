@@ -15,8 +15,6 @@ A **graph** is a collection of **vertices (nodes)** connected by **edges**. Unli
 2. **Traverse the graph** (DFS or BFS) with appropriate state tracking
 3. **Extract the answer** (path, connectivity, cycle detection, etc.)
 
-Understanding graph representations and traversals is fundamental -- nearly every graph problem builds on these primitives.
-
 ---
 
 ## Time Complexity Table
@@ -33,7 +31,6 @@ Understanding graph representations and traversals is fundamental -- nearly ever
 **Choosing a Representation:**
 - **Adjacency list:** Best default choice for interviews. Efficient for sparse graphs (E << V²).
 - **Adjacency matrix:** Use when edges are dense (E ≈ V²) or when you need O(1) edge existence checks.
-- **Edge list:** Rarely used except for algorithms like Kruskal's MST.
 
 ---
 
@@ -41,80 +38,61 @@ Understanding graph representations and traversals is fundamental -- nearly ever
 
 ### 1. Graph Representations
 
-```go
+```java
 // Adjacency list (most common)
-graph := make(map[int][]int)  // vertex -> slice of neighbors
+Map<Integer, List<Integer>> graph = new HashMap<>();
 
 // Add directed edge u -> v
-graph[u] = append(graph[u], v)
+graph.computeIfAbsent(u, k -> new ArrayList<>()).add(v);
 
 // Add undirected edge u — v
-graph[u] = append(graph[u], v)
-graph[v] = append(graph[v], u)
+graph.computeIfAbsent(u, k -> new ArrayList<>()).add(v);
+graph.computeIfAbsent(v, k -> new ArrayList<>()).add(u);
 
-// Weighted adjacency list
-type Edge struct {
-    To     int
-    Weight int
-}
-graph := make(map[int][]Edge)
-graph[u] = append(graph[u], Edge{To: v, Weight: w})
+// Adjacency list as int[][] (when vertices are 0..n-1)
+List<Integer>[] adj = new List[n];
+for (int i = 0; i < n; i++) adj[i] = new ArrayList<>();
+adj[u].add(v);
 
 // Adjacency matrix
-n := 5  // number of vertices
-matrix := make([][]int, n)
-for i := range matrix {
-    matrix[i] = make([]int, n)
-}
-matrix[u][v] = 1  // or weight for weighted graphs
+int[][] matrix = new int[n][n];
+matrix[u][v] = 1;  // or weight for weighted graphs
 ```
 
 ### 2. DFS (Recursive)
 
 Explores as deep as possible before backtracking. Use for connectivity, cycle detection, topological sort.
 
-```go
-func dfs(node int, graph map[int][]int, visited map[int]bool) {
-    if visited[node] {
-        return
-    }
-    visited[node] = true
+```java
+void dfs(int node, Map<Integer, List<Integer>> graph, boolean[] visited) {
+    if (visited[node]) return;
+    visited[node] = true;
     // Process node here
-    fmt.Println(node)
 
-    for _, neighbor := range graph[node] {
-        dfs(neighbor, graph, visited)
+    for (int neighbor : graph.getOrDefault(node, Collections.emptyList())) {
+        dfs(neighbor, graph, visited);
     }
 }
-
-// Usage
-visited := make(map[int]bool)
-dfs(startNode, graph, visited)
 ```
 
 ### 3. DFS (Iterative with Stack)
 
-Useful when recursion depth might cause stack overflow.
+Useful when recursion depth might cause StackOverflowError.
 
-```go
-func dfsIterative(start int, graph map[int][]int) {
-    visited := make(map[int]bool)
-    stack := []int{start}
+```java
+void dfsIterative(int start, Map<Integer, List<Integer>> graph, int n) {
+    boolean[] visited = new boolean[n];
+    Deque<Integer> stack = new ArrayDeque<>();
+    stack.push(start);
 
-    for len(stack) > 0 {
-        node := stack[len(stack)-1]
-        stack = stack[:len(stack)-1]
+    while (!stack.isEmpty()) {
+        int node = stack.pop();
+        if (visited[node]) continue;
+        visited[node] = true;
+        // Process node here
 
-        if visited[node] {
-            continue
-        }
-        visited[node] = true
-        fmt.Println(node)
-
-        for _, neighbor := range graph[node] {
-            if !visited[neighbor] {
-                stack = append(stack, neighbor)
-            }
+        for (int neighbor : graph.getOrDefault(node, Collections.emptyList())) {
+            if (!visited[neighbor]) stack.push(neighbor);
         }
     }
 }
@@ -124,21 +102,21 @@ func dfsIterative(start int, graph map[int][]int) {
 
 Explores neighbors level by level. Use for shortest path in unweighted graphs.
 
-```go
-func bfs(start int, graph map[int][]int) {
-    visited := make(map[int]bool)
-    queue := []int{start}
-    visited[start] = true
+```java
+void bfs(int start, Map<Integer, List<Integer>> graph) {
+    boolean[] visited = new boolean[/* n */];
+    Queue<Integer> queue = new ArrayDeque<>();
+    queue.offer(start);
+    visited[start] = true;
 
-    for len(queue) > 0 {
-        node := queue[0]
-        queue = queue[1:]
-        fmt.Println(node)
+    while (!queue.isEmpty()) {
+        int node = queue.poll();
+        // Process node here
 
-        for _, neighbor := range graph[node] {
-            if !visited[neighbor] {
-                visited[neighbor] = true
-                queue = append(queue, neighbor)
+        for (int neighbor : graph.getOrDefault(node, Collections.emptyList())) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                queue.offer(neighbor);
             }
         }
     }
@@ -147,38 +125,30 @@ func bfs(start int, graph map[int][]int) {
 
 ### 5. Shortest Path (Unweighted Graph with BFS)
 
-```go
-func shortestPath(start, end int, graph map[int][]int) int {
-    if start == end {
-        return 0
-    }
+```java
+int shortestPath(int start, int end, Map<Integer, List<Integer>> graph) {
+    if (start == end) return 0;
+    boolean[] visited = new boolean[/* n */];
+    Queue<Integer> queue = new ArrayDeque<>();
+    queue.offer(start);
+    visited[start] = true;
+    int distance = 0;
 
-    visited := make(map[int]bool)
-    queue := []int{start}
-    visited[start] = true
-    distance := 0
-
-    for len(queue) > 0 {
-        levelSize := len(queue)
-        distance++
-
-        for i := 0; i < levelSize; i++ {
-            node := queue[0]
-            queue = queue[1:]
-
-            for _, neighbor := range graph[node] {
-                if neighbor == end {
-                    return distance
-                }
-                if !visited[neighbor] {
-                    visited[neighbor] = true
-                    queue = append(queue, neighbor)
+    while (!queue.isEmpty()) {
+        int size = queue.size();
+        distance++;
+        for (int i = 0; i < size; i++) {
+            int node = queue.poll();
+            for (int neighbor : graph.getOrDefault(node, Collections.emptyList())) {
+                if (neighbor == end) return distance;
+                if (!visited[neighbor]) {
+                    visited[neighbor] = true;
+                    queue.offer(neighbor);
                 }
             }
         }
     }
-
-    return -1  // no path exists
+    return -1;  // no path exists
 }
 ```
 
@@ -186,153 +156,85 @@ func shortestPath(start, end int, graph map[int][]int) int {
 
 Use DFS with parent tracking.
 
-```go
-func hasCycle(graph map[int][]int, n int) bool {
-    visited := make(map[int]bool)
+```java
+boolean hasCycleUndirected(int[][] edges, int n) {
+    List<Integer>[] adj = new List[n];
+    for (int i = 0; i < n; i++) adj[i] = new ArrayList<>();
+    for (int[] e : edges) { adj[e[0]].add(e[1]); adj[e[1]].add(e[0]); }
 
-    var dfs func(node, parent int) bool
-    dfs = func(node, parent int) bool {
-        visited[node] = true
-
-        for _, neighbor := range graph[node] {
-            if !visited[neighbor] {
-                if dfs(neighbor, node) {
-                    return true
-                }
-            } else if neighbor != parent {
-                return true  // visited non-parent neighbor = cycle
-            }
-        }
-        return false
+    boolean[] visited = new boolean[n];
+    for (int i = 0; i < n; i++) {
+        if (!visited[i] && dfsUndirected(i, -1, adj, visited)) return true;
     }
+    return false;
+}
 
-    for i := 0; i < n; i++ {
-        if !visited[i] {
-            if dfs(i, -1) {
-                return true
-            }
+boolean dfsUndirected(int node, int parent, List<Integer>[] adj, boolean[] visited) {
+    visited[node] = true;
+    for (int neighbor : adj[node]) {
+        if (!visited[neighbor]) {
+            if (dfsUndirected(neighbor, node, adj, visited)) return true;
+        } else if (neighbor != parent) {
+            return true;  // visited non-parent neighbor = cycle
         }
     }
-    return false
+    return false;
 }
 ```
 
-### 7. Cycle Detection (Directed Graph)
-
-Use DFS with recursion stack tracking.
-
-```go
-func hasCycleDirected(graph map[int][]int, n int) bool {
-    visited := make(map[int]bool)
-    recStack := make(map[int]bool)
-
-    var dfs func(node int) bool
-    dfs = func(node int) bool {
-        visited[node] = true
-        recStack[node] = true
-
-        for _, neighbor := range graph[node] {
-            if !visited[neighbor] {
-                if dfs(neighbor) {
-                    return true
-                }
-            } else if recStack[neighbor] {
-                return true  // back edge to node in current path
-            }
-        }
-
-        recStack[node] = false  // backtrack
-        return false
-    }
-
-    for i := 0; i < n; i++ {
-        if !visited[i] {
-            if dfs(i) {
-                return true
-            }
-        }
-    }
-    return false
-}
-```
-
-### 8. Topological Sort (Kahn's Algorithm - BFS)
+### 7. Topological Sort (Kahn's Algorithm - BFS)
 
 Orders nodes so all edges point forward. Only works on DAGs.
 
-```go
-func topologicalSort(graph map[int][]int, n int) []int {
-    inDegree := make([]int, n)
+```java
+int[] topologicalSort(int[][] prerequisites, int n) {
+    List<Integer>[] adj = new List[n];
+    for (int i = 0; i < n; i++) adj[i] = new ArrayList<>();
+    int[] inDegree = new int[n];
 
-    // Calculate in-degrees
-    for _, neighbors := range graph {
-        for _, neighbor := range neighbors {
-            inDegree[neighbor]++
+    for (int[] pre : prerequisites) {
+        adj[pre[1]].add(pre[0]);  // pre[1] -> pre[0]
+        inDegree[pre[0]]++;
+    }
+
+    Queue<Integer> queue = new ArrayDeque<>();
+    for (int i = 0; i < n; i++) if (inDegree[i] == 0) queue.offer(i);
+
+    int[] order = new int[n];
+    int idx = 0;
+    while (!queue.isEmpty()) {
+        int node = queue.poll();
+        order[idx++] = node;
+        for (int neighbor : adj[node]) {
+            if (--inDegree[neighbor] == 0) queue.offer(neighbor);
         }
     }
-
-    // Start with nodes that have no incoming edges
-    queue := []int{}
-    for i := 0; i < n; i++ {
-        if inDegree[i] == 0 {
-            queue = append(queue, i)
-        }
-    }
-
-    result := []int{}
-    for len(queue) > 0 {
-        node := queue[0]
-        queue = queue[1:]
-        result = append(result, node)
-
-        for _, neighbor := range graph[node] {
-            inDegree[neighbor]--
-            if inDegree[neighbor] == 0 {
-                queue = append(queue, neighbor)
-            }
-        }
-    }
-
-    if len(result) != n {
-        return nil  // cycle detected (not a DAG)
-    }
-    return result
+    return idx == n ? order : new int[]{};  // empty if cycle detected
 }
 ```
 
-### 9. Number of Connected Components
+### 8. Number of Connected Components
 
-```go
-func countComponents(n int, edges [][]int) int {
-    // Build graph
-    graph := make(map[int][]int)
-    for _, edge := range edges {
-        u, v := edge[0], edge[1]
-        graph[u] = append(graph[u], v)
-        graph[v] = append(graph[v], u)
-    }
+```java
+int countComponents(int n, int[][] edges) {
+    List<Integer>[] adj = new List[n];
+    for (int i = 0; i < n; i++) adj[i] = new ArrayList<>();
+    for (int[] e : edges) { adj[e[0]].add(e[1]); adj[e[1]].add(e[0]); }
 
-    visited := make(map[int]bool)
-    count := 0
-
-    var dfs func(node int)
-    dfs = func(node int) {
-        visited[node] = true
-        for _, neighbor := range graph[node] {
-            if !visited[neighbor] {
-                dfs(neighbor)
-            }
+    boolean[] visited = new boolean[n];
+    int count = 0;
+    for (int i = 0; i < n; i++) {
+        if (!visited[i]) {
+            dfsComponent(i, adj, visited);
+            count++;
         }
     }
+    return count;
+}
 
-    for i := 0; i < n; i++ {
-        if !visited[i] {
-            count++
-            dfs(i)
-        }
-    }
-
-    return count
+void dfsComponent(int node, List<Integer>[] adj, boolean[] visited) {
+    visited[node] = true;
+    for (int neighbor : adj[node]) if (!visited[neighbor]) dfsComponent(neighbor, adj, visited);
 }
 ```
 
@@ -346,27 +248,9 @@ func countComponents(n int, edges [][]int) int {
 | Connectivity / reachability | Yes | Yes |
 | Cycle detection | Yes | Possible but less natural |
 | Topological sort | Yes (DFS-based) | Yes (Kahn's algorithm) |
-| Space complexity | O(h) recursion depth | O(w) width of graph |
+| Space in balanced graph | O(h) | O(w) width of graph |
 | Path finding | Finds *a* path | Finds *shortest* path |
-| Maze solving | Works | Better (shortest) |
 | Detect bipartiteness | Works | Natural (coloring by level) |
-
-**Rule of thumb:** Use BFS for shortest path in unweighted graphs. Use DFS for everything else unless BFS is simpler.
-
----
-
-## When to Use
-
-| Scenario | Graph Approach |
-|----------|----------------|
-| Modeling relationships (social, dependencies) | Yes |
-| Shortest path (unweighted) | BFS |
-| Shortest path (weighted, non-negative) | Dijkstra's |
-| Shortest path (weighted, negative edges) | Bellman-Ford |
-| Detect cycles | DFS with stack/parent tracking |
-| Topological ordering (task scheduling) | Topological sort (Kahn's or DFS) |
-| Connected components | DFS or Union-Find |
-| Bipartite check | BFS with 2-coloring |
 
 ---
 
@@ -376,23 +260,17 @@ func countComponents(n int, edges [][]int) int {
 
 2. **Confusing directed vs undirected.** When building adjacency lists, undirected edges require adding both `u -> v` and `v -> u`.
 
-3. **Off-by-one errors with 0-indexed vs 1-indexed.** Problem inputs may use 1-indexed nodes. Adjust when building the graph.
+3. **Not handling disconnected components.** Many graphs have multiple components. Loop through all nodes to ensure full traversal.
 
-4. **Not handling disconnected components.** Many graphs have multiple components. Loop through all nodes to ensure full traversal.
+4. **Using DFS for shortest path.** DFS finds *a* path, not the *shortest* path. Use BFS for unweighted shortest path.
 
-5. **Using DFS for shortest path in unweighted graphs.** DFS finds *a* path, not the *shortest* path. Use BFS.
+5. **Stack overflow with deep DFS recursion.** For graphs with 10^5+ nodes, use iterative DFS with an explicit `Deque`.
 
-6. **Stack overflow with deep DFS recursion.** For graphs with 10^5+ nodes, use iterative DFS with an explicit stack.
-
-7. **Incorrect cycle detection in directed graphs.** Need a recursion stack (or coloring: white/gray/black), not just visited set.
-
-8. **Modifying graph during traversal.** Avoid adding/removing edges while traversing unless you understand the implications.
+6. **Incorrect cycle detection in directed graphs.** Need a recursion stack (or coloring: white/gray/black), not just visited array.
 
 ---
 
 ## Interview Relevance
-
-Graphs are a high-signal topic in interviews. Master DFS, BFS, and graph building.
 
 | Pattern | Signal Words | Example Problems |
 |---------|--------------|------------------|
@@ -402,8 +280,6 @@ Graphs are a high-signal topic in interviews. Master DFS, BFS, and graph buildin
 | Topological sort | "prerequisites", "order", "dependencies" | Course Schedule II, Alien Dictionary |
 | Clone graph | "deep copy", "clone", "graph" | Clone Graph |
 | Bipartite | "two groups", "bipartite", "coloring" | Is Graph Bipartite? |
-
-**Interview Insight:** Most graph problems boil down to: (1) Identify nodes and edges from the problem statement (not always obvious), (2) Build the graph, (3) Run DFS or BFS with appropriate state. Practice translating problems into graphs.
 
 ---
 
@@ -416,47 +292,31 @@ Graphs are a high-signal topic in interviews. Master DFS, BFS, and graph buildin
 | 3 | Course Schedule | Medium | Cycle detection in directed graph | 207 |
 | 4 | Course Schedule II | Medium | Topological sort (Kahn's) | 210 |
 | 5 | Pacific Atlantic Water Flow | Medium | DFS from boundaries | 417 |
-| 6 | Number of Connected Components | Medium | DFS/Union-Find | 323 (premium) / 547 |
-| 7 | Graph Valid Tree | Medium | Cycle detection + connectivity | 261 (premium) |
-
-Start with 1-2 to master DFS/BFS. Problems 3-4 are essential for topological sort. Problem 5 tests creative DFS application.
-
----
-
-## Special Graph Types
-
-**DAG (Directed Acyclic Graph):**
-- No cycles
-- Enables topological ordering
-- Used for: task scheduling, build systems, version control
-
-**Bipartite Graph:**
-- Nodes can be split into two groups with no edges within groups
-- Check with 2-coloring via BFS
-- Used for: matching problems, resource allocation
-
-**Weighted Graph:**
-- Edges have costs
-- Requires specialized algorithms: Dijkstra, Bellman-Ford, Floyd-Warshall
+| 6 | Number of Connected Components | Medium | DFS/Union-Find | 323 / 547 |
 
 ---
 
 ## Quick Reference Card
 
+```java
+// Adjacency list (vertices 0..n-1)
+List<Integer>[] adj = new List[n];
+for (int i = 0; i < n; i++) adj[i] = new ArrayList<>();
+adj[u].add(v);  // directed; also adj[v].add(u) for undirected
+
+// DFS (recursive)
+void dfs(int node) {
+    visited[node] = true;
+    for (int nb : adj[node]) if (!visited[nb]) dfs(nb);
+}
+
+// BFS
+Queue<Integer> q = new ArrayDeque<>();
+q.offer(start); visited[start] = true;
+while (!q.isEmpty()) {
+    int node = q.poll();
+    for (int nb : adj[node]) if (!visited[nb]) { visited[nb] = true; q.offer(nb); }
+}
+
+Always:  Mark visited; handle disconnected components with outer loop
 ```
-Adjacency list:   graph := make(map[int][]int)
-Add edge:         graph[u] = append(graph[u], v)
-DFS:              Recursion or stack; mark visited before recursing
-BFS:              Queue; mark visited before adding to queue
-Cycle (directed): DFS with recursion stack
-Cycle (undirected): DFS with parent tracking
-Topological:      Kahn's (BFS with in-degrees) or DFS + reverse postorder
-Shortest path:    BFS (unweighted); Dijkstra (weighted)
-Components:       DFS/BFS from each unvisited node
-
-Always:           Mark visited; handle disconnected components
-```
-
----
-
-> **Key Insight:** Most graph problems reduce to "build the graph, run DFS/BFS with state." The hard part is often recognizing what the nodes and edges represent -- sometimes they're not explicit in the problem. Practice translating problems into graphs.

@@ -1,12 +1,12 @@
 # Data Structures Syllabus
 
-A comprehensive reference for the core data structures you need to master for coding interviews and the NeetCode 150. Each section covers the concept, key operations with complexity, when to use it, Go implementation notes, common pitfalls, and NeetCode relevance.
+A comprehensive reference for the core data structures you need to master for coding interviews and the NeetCode 150. Each section covers the concept, key operations with complexity, when to use it, Java implementation notes, common pitfalls, and NeetCode relevance.
 
 ---
 
 ## Table of Contents
 
-1. [Arrays / Slices](#1-arrays--slices)
+1. [Arrays / ArrayList](#1-arrays--arraylist)
 2. [Strings](#2-strings)
 3. [Linked Lists](#3-linked-lists)
 4. [Stacks](#4-stacks)
@@ -26,12 +26,12 @@ A comprehensive reference for the core data structures you need to master for co
 
 ## Master Operations Complexity Table
 
-| Operation | Array / Slice | Linked List | Hash Map | BST (balanced) | Heap |
-|-----------|---------------|-------------|----------|----------------|------|
-| Access    | O(1)          | O(n)        | O(1) avg | O(log n)       | O(n) |
-| Search    | O(n)          | O(n)        | O(1) avg | O(log n)       | O(n) |
-| Insert    | O(n)          | O(1)*       | O(1) avg | O(log n)       | O(log n) |
-| Delete    | O(n)          | O(1)*       | O(1) avg | O(log n)       | O(log n) |
+| Operation | Array / ArrayList | Linked List | Hash Map | BST (balanced) | Heap |
+|-----------|-------------------|-------------|----------|----------------|------|
+| Access    | O(1)              | O(n)        | O(1) avg | O(log n)       | O(n) |
+| Search    | O(n)              | O(n)        | O(1) avg | O(log n)       | O(n) |
+| Insert    | O(n)              | O(1)*       | O(1) avg | O(log n)       | O(log n) |
+| Delete    | O(n)              | O(1)*       | O(1) avg | O(log n)       | O(log n) |
 
 \* *Linked list insert/delete is O(1) only when you already have a pointer to the node; finding it is O(n).*
 
@@ -41,60 +41,73 @@ A comprehensive reference for the core data structures you need to master for co
 
 ---
 
-### 1. Arrays / Slices
+### 1. Arrays / ArrayList
 
 **Difficulty:** Beginner
 
 **Concept:**
-Arrays store elements in contiguous memory, allowing O(1) access by index. In Go, arrays have a fixed size at compile time, while slices are dynamically-sized views over an underlying array.
+Arrays store elements in contiguous memory, allowing O(1) access by index. In Java, arrays have a fixed size. `ArrayList` is the dynamic alternative backed by a resizable array.
 
 **Key Operations:**
 
 | Operation | Time Complexity | Notes |
 |-----------|----------------|-------|
-| Access by index | O(1) | `arr[i]` |
+| Access by index | O(1) | `arr[i]` / `list.get(i)` |
 | Search (unsorted) | O(n) | Linear scan |
 | Search (sorted) | O(log n) | Binary search |
-| Append | O(1) amortized | Go `append()` doubles capacity when full |
+| Add to end | O(1) amortized | ArrayList doubles capacity when full |
 | Insert at index | O(n) | Must shift elements right |
 | Delete at index | O(n) | Must shift elements left |
-| Get length | O(1) | `len(s)` |
-| Get capacity | O(1) | `cap(s)` |
+| Get length | O(1) | `arr.length` / `list.size()` |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-```go
+```java
 // Fixed-size array
-var arr [5]int
+int[] arr = new int[5];
+int[] initialized = {1, 2, 3, 4, 5};
 
-// Slice (dynamic)
-s := make([]int, 0, 10)  // len=0, cap=10
-s = append(s, 42)
+// ArrayList (dynamic)
+List<Integer> list = new ArrayList<>();
+list.add(42);                    // append O(1) amortized
+list.add(0, 99);                 // insert at index O(n)
+list.get(0);                     // access O(1)
+list.set(0, 100);                // update O(1)
+list.remove(list.size() - 1);   // remove last O(1)
+list.remove(Integer.valueOf(42)); // remove by value O(n)
+list.size();
 
-// Slice from array
-a := [5]int{1, 2, 3, 4, 5}
-sub := a[1:4]  // [2, 3, 4] -- shares underlying memory
+// Copy an array
+int[] copy = Arrays.copyOf(arr, arr.length);
+int[] rangeCopy = Arrays.copyOfRange(arr, 1, 4); // [1, 4)
 
-// Copy (to avoid shared memory issues)
-dst := make([]int, len(src))
-copy(dst, src)
+// Fill
+Arrays.fill(arr, 0);
+
+// 2D array
+int[][] matrix = new int[3][4];
+
+// Convert array to list and back
+List<Integer> fromArr = new ArrayList<>(Arrays.asList(1, 2, 3));
+Integer[] backToArr = fromArr.toArray(new Integer[0]);
 
 // Delete element at index i (order preserved)
-s = append(s[:i], s[i+1:]...)
+list.remove(i);  // shifts elements left
 
 // Delete element at index i (order NOT preserved, O(1))
-s[i] = s[len(s)-1]
-s = s[:len(s)-1]
+list.set(i, list.get(list.size() - 1));
+list.remove(list.size() - 1);
 ```
 
 **Common Pitfalls:**
-- Slices share underlying arrays -- modifying one can affect another
-- `append()` may allocate a new backing array, breaking shared references
-- Off-by-one errors in slice bounds `[low:high)` -- high is exclusive
+- `Arrays.asList()` returns a fixed-size list backed by the array -- you can't add/remove from it
+- Autoboxing overhead: `List<Integer>` vs `int[]` -- prefer primitives in performance-critical code
+- Off-by-one in `Arrays.copyOfRange(arr, from, to)` -- `to` is exclusive
+- `int[]` cannot be used as a generic type parameter; use `Integer[]` or `List<Integer>`
 
-> **Key Insight:** When you need O(1) random access and mostly append to the end, slices are your go-to. If you frequently insert/delete in the middle, consider a linked list.
+> **Key Insight:** When you need O(1) random access and mostly append to the end, ArrayList is your go-to. If you frequently insert/delete in the middle, consider a LinkedList or deque.
 
-**NeetCode Relevance:** Arrays & Hashing, Two Pointers, Sliding Window -- nearly every problem uses slices.
+**NeetCode Relevance:** Arrays & Hashing, Two Pointers, Sliding Window -- nearly every problem uses arrays or ArrayLists.
 
 ---
 
@@ -103,56 +116,74 @@ s = s[:len(s)-1]
 **Difficulty:** Beginner
 
 **Concept:**
-Strings in Go are immutable sequences of bytes. They are UTF-8 encoded by default, meaning a single character can be 1-4 bytes. The `rune` type represents a Unicode code point.
+Strings in Java are immutable sequences of UTF-16 characters. Once created, the content cannot be changed. Use `StringBuilder` for efficient mutable string construction.
 
 **Key Operations:**
 
 | Operation | Time Complexity | Notes |
 |-----------|----------------|-------|
-| Access byte by index | O(1) | `s[i]` returns a byte |
-| Iterate by rune | O(n) | `for _, r := range s` |
-| Concatenation | O(n+m) | Creates new string |
-| Substring | O(1)* | Shares backing memory |
-| Length (bytes) | O(1) | `len(s)` |
-| Length (runes) | O(n) | `utf8.RuneCountInString(s)` |
+| Access char by index | O(1) | `s.charAt(i)` |
+| Substring | O(n) | Creates new String in Java 7u6+ |
+| Concatenation (`+`) | O(n+m) | Creates new String |
+| StringBuilder append | O(1) amortized | Mutable buffer |
+| Length | O(1) | `s.length()` |
+| Compare | O(n) | `s.equals(t)` |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-```go
-// Strings are immutable -- this creates a new string each time
-s := "hello"
-s += " world"  // O(n) -- avoid in loops
+```java
+// Strings are immutable -- each + creates a new object
+String s = "hello";
+s = s + " world";  // O(n) -- avoid in loops
 
-// Use strings.Builder for efficient concatenation
-var b strings.Builder
-for i := 0; i < 1000; i++ {
-    b.WriteString("a")
+// Use StringBuilder for efficient concatenation
+StringBuilder sb = new StringBuilder();
+for (int i = 0; i < 1000; i++) {
+    sb.append('a');
 }
-result := b.String()
+String result = sb.toString();
 
-// Convert to rune slice for mutation
-runes := []rune(s)
-runes[0] = 'H'
-s = string(runes)
+// Common operations
+s.charAt(i);                        // get char at index
+s.length();                         // length
+s.substring(1, 4);                  // [1, 4) exclusive end
+s.indexOf("sub");                   // -1 if not found
+s.contains("sub");
+s.startsWith("he");
+s.endsWith("lo");
+s.toLowerCase();
+s.toUpperCase();
+s.trim();                           // remove leading/trailing whitespace
+s.strip();                          // Unicode-aware trim (Java 11+)
+s.split(",");                       // returns String[]
+String.valueOf(42);                 // int to String
+Integer.parseInt("42");             // String to int
+s.replace('a', 'b');               // replace all chars
+s.replaceAll("\\s+", " ");         // regex replace
 
-// Byte vs Rune
-s := "café"
-fmt.Println(len(s))                    // 5 (bytes)
-fmt.Println(utf8.RuneCountInString(s)) // 4 (runes)
+// Convert to char array for mutation
+char[] chars = s.toCharArray();
+chars[0] = 'H';
+String modified = new String(chars);
 
-// Common string operations
-strings.Contains(s, "sub")
-strings.Split(s, ",")
-strings.ToLower(s)
-strings.TrimSpace(s)
+// Check if two strings are anagrams
+char[] a = s1.toCharArray(); Arrays.sort(a);
+char[] b = s2.toCharArray(); Arrays.sort(b);
+Arrays.equals(a, b); // true if anagram
+
+// String comparison
+s.equals(t);          // content equality (use this, not ==)
+s.equalsIgnoreCase(t);
+s.compareTo(t);       // lexicographic comparison
 ```
 
 **Common Pitfalls:**
-- `s[i]` gives you a byte, not a rune -- this breaks with multi-byte characters
-- String concatenation in a loop is O(n^2) -- use `strings.Builder`
-- Comparing strings is O(n), not O(1)
+- Never use `==` to compare strings (compares references, not content) -- always use `.equals()`
+- String concatenation in a loop is O(n^2) -- use `StringBuilder`
+- `substring()` in modern Java (7u6+) copies the data -- it's O(n), not O(1)
+- `charAt()` returns a `char` (primitive), not a `Character` -- watch for autoboxing
 
-> **Key Insight:** Always think about whether you're working with bytes or runes. For interview problems with ASCII-only input, bytes are fine. For Unicode-aware code, iterate with `range` to get runes.
+> **Key Insight:** Treat Java strings as read-only. When you need to manipulate characters (reverse, replace, rearrange), convert to `char[]` or use `StringBuilder`. For interview problems with ASCII input, a `int[26]` frequency array is often faster than a `HashMap<Character, Integer>`.
 
 **NeetCode Relevance:** Arrays & Hashing (anagram problems), Sliding Window (substring problems), Two Pointers.
 
@@ -177,53 +208,64 @@ A linked list is a chain of nodes where each node holds a value and a pointer to
 | Delete node | O(1) | Given pointer + previous pointer |
 | Delete by value | O(n) | Must find it first |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-```go
-// Singly linked list node
-type ListNode struct {
-    Val  int
-    Next *ListNode
+```java
+// LeetCode's standard ListNode definition
+class ListNode {
+    int val;
+    ListNode next;
+    ListNode(int val) { this.val = val; }
 }
 
 // Dummy head technique (simplifies edge cases)
-dummy := &ListNode{Next: head}
-curr := dummy
-for curr.Next != nil {
-    if curr.Next.Val == target {
-        curr.Next = curr.Next.Next  // delete
+ListNode dummy = new ListNode(0);
+dummy.next = head;
+ListNode curr = dummy;
+while (curr.next != null) {
+    if (curr.next.val == target) {
+        curr.next = curr.next.next;  // delete
     } else {
-        curr = curr.Next
+        curr = curr.next;
     }
 }
-return dummy.Next
+return dummy.next;
 
 // Reverse a linked list (iterative)
-func reverseList(head *ListNode) *ListNode {
-    var prev *ListNode
-    curr := head
-    for curr != nil {
-        next := curr.Next
-        curr.Next = prev
-        prev = curr
-        curr = next
+ListNode reverseList(ListNode head) {
+    ListNode prev = null;
+    ListNode curr = head;
+    while (curr != null) {
+        ListNode next = curr.next;
+        curr.next = prev;
+        prev = curr;
+        curr = next;
     }
-    return prev
+    return prev;
 }
 
 // Fast and slow pointer (find middle)
-slow, fast := head, head
-for fast != nil && fast.Next != nil {
-    slow = slow.Next
-    fast = fast.Next.Next
+ListNode slow = head, fast = head;
+while (fast != null && fast.next != null) {
+    slow = slow.next;
+    fast = fast.next.next;
 }
 // slow is now at the middle
+
+// Java's built-in LinkedList (doubly linked, implements Deque)
+LinkedList<Integer> ll = new LinkedList<>();
+ll.addFirst(1);   // O(1)
+ll.addLast(2);    // O(1)
+ll.removeFirst(); // O(1)
+ll.removeLast();  // O(1)
+ll.get(i);        // O(n) -- avoid random access
 ```
 
 **Common Pitfalls:**
-- Forgetting to handle `nil` head or single-node lists
-- Losing references when rearranging pointers (always save `next` before overwriting)
+- Forgetting to handle `null` head or single-node lists
+- Losing references when rearranging pointers -- always save `next` before overwriting
 - Not using dummy nodes -- leads to special-casing head operations
+- Java's `LinkedList` is rarely the right choice for interviews; use `ArrayDeque` for stack/queue
 
 > **Key Insight:** Use the dummy head pattern to eliminate edge cases. Use fast/slow pointers to find midpoints, detect cycles, and find the kth node from the end.
 
@@ -236,37 +278,42 @@ for fast != nil && fast.Next != nil {
 **Difficulty:** Beginner
 
 **Concept:**
-A stack is a Last-In-First-Out (LIFO) data structure. You push elements onto the top and pop them from the top. In Go, a slice is the natural implementation.
+A stack is a Last-In-First-Out (LIFO) data structure. You push elements onto the top and pop them from the top. In Java, prefer `ArrayDeque` over the legacy `Stack` class.
 
 **Key Operations:**
 
 | Operation | Time Complexity | Notes |
 |-----------|----------------|-------|
-| Push | O(1) amortized | `append(stack, val)` |
-| Pop | O(1) | `stack = stack[:len(stack)-1]` |
-| Peek / Top | O(1) | `stack[len(stack)-1]` |
-| IsEmpty | O(1) | `len(stack) == 0` |
+| Push | O(1) amortized | `deque.push(val)` |
+| Pop | O(1) | `deque.pop()` |
+| Peek / Top | O(1) | `deque.peek()` |
+| IsEmpty | O(1) | `deque.isEmpty()` |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-```go
-// Stack using a slice
-stack := []int{}
+```java
+// Use ArrayDeque -- faster than Stack, not synchronized
+Deque<Integer> stack = new ArrayDeque<>();
 
 // Push
-stack = append(stack, 42)
+stack.push(42);         // adds to front (top of stack)
 
-// Peek
-top := stack[len(stack)-1]
+// Peek (without removing)
+int top = stack.peek(); // throws NoSuchElementException if empty
+int topSafe = stack.isEmpty() ? -1 : stack.peek();
 
 // Pop
-top = stack[len(stack)-1]
-stack = stack[:len(stack)-1]
+int val = stack.pop();  // removes and returns top
 
 // IsEmpty
-if len(stack) == 0 {
-    // empty
-}
+if (stack.isEmpty()) { /* empty */ }
+
+// Size
+int size = stack.size();
+
+// Why NOT to use java.util.Stack:
+// - Stack extends Vector (synchronized, slow)
+// - ArrayDeque is faster and the recommended replacement
 ```
 
 **Patterns to Know:**
@@ -276,30 +323,29 @@ if len(stack) == 0 {
 3. **Expression evaluation:** Convert infix to postfix, then evaluate with a stack.
 4. **DFS (iterative):** Use a stack instead of recursion.
 
-```go
+```java
 // Monotonic decreasing stack -- next greater element
-func nextGreaterElement(nums []int) []int {
-    n := len(nums)
-    result := make([]int, n)
-    for i := range result {
-        result[i] = -1
-    }
-    stack := []int{} // stores indices
-    for i := 0; i < n; i++ {
-        for len(stack) > 0 && nums[i] > nums[stack[len(stack)-1]] {
-            idx := stack[len(stack)-1]
-            stack = stack[:len(stack)-1]
-            result[idx] = nums[i]
+int[] nextGreaterElement(int[] nums) {
+    int n = nums.length;
+    int[] result = new int[n];
+    Arrays.fill(result, -1);
+    Deque<Integer> stack = new ArrayDeque<>(); // stores indices
+
+    for (int i = 0; i < n; i++) {
+        while (!stack.isEmpty() && nums[i] > nums[stack.peek()]) {
+            int idx = stack.pop();
+            result[idx] = nums[i];
         }
-        stack = append(stack, i)
+        stack.push(i);
     }
-    return result
+    return result;
 }
 ```
 
 **Common Pitfalls:**
-- Popping from an empty stack (always check `len(stack) > 0`)
-- Forgetting that Go slices keep the underlying memory -- for large stacks, this can cause memory leaks
+- Never use `java.util.Stack` -- use `ArrayDeque` instead
+- `peek()` and `pop()` throw `NoSuchElementException` on an empty deque -- always check `isEmpty()` first, or use `peekFirst()`/`pollFirst()` which return `null`
+- When storing indices in the stack, remember to dereference with `nums[stack.peek()]`
 
 > **Key Insight:** Whenever you see "matching", "nesting", or "next greater/smaller" in a problem, think stack.
 
@@ -318,32 +364,41 @@ A queue is a First-In-First-Out (FIFO) data structure. Elements are enqueued at 
 
 | Operation | Time Complexity | Notes |
 |-----------|----------------|-------|
-| Enqueue | O(1) amortized | Append to back |
-| Dequeue | O(1)* | Remove from front |
-| Peek front | O(1) | `queue[0]` |
-| IsEmpty | O(1) | `len(queue) == 0` |
+| Enqueue | O(1) | `queue.offer(val)` |
+| Dequeue | O(1) | `queue.poll()` |
+| Peek front | O(1) | `queue.peek()` |
+| IsEmpty | O(1) | `queue.isEmpty()` |
 
-\* *Dequeue from a slice is O(n) due to shifting. Use a ring buffer or linked list for true O(1).*
+**Java Implementation Notes:**
 
-**Go Implementation Notes:**
+```java
+// Queue interface, backed by LinkedList or ArrayDeque
+Queue<Integer> queue = new ArrayDeque<>();  // preferred: O(1) for all ops
 
-```go
-// Simple queue using slice (fine for interview problems)
-queue := []int{}
+// Enqueue (returns false instead of throwing on capacity limit)
+queue.offer(42);
 
-// Enqueue
-queue = append(queue, 42)
+// Peek (returns null if empty, unlike element() which throws)
+Integer front = queue.peek();
 
-// Dequeue
-front := queue[0]
-queue = queue[1:]  // Note: O(n) shift, but OK for most interviews
+// Dequeue (returns null if empty, unlike remove() which throws)
+Integer val = queue.poll();
 
-// For true O(1) dequeue, use container/list
-import "container/list"
-q := list.New()
-q.PushBack(42)           // enqueue
-front := q.Front().Value // peek
-q.Remove(q.Front())      // dequeue
+// Check empty
+queue.isEmpty();
+queue.size();
+
+// Deque for double-ended operations
+Deque<Integer> deque = new ArrayDeque<>();
+deque.offerFirst(1);   // add to front
+deque.offerLast(2);    // add to back
+deque.pollFirst();     // remove from front
+deque.pollLast();      // remove from back
+deque.peekFirst();     // peek front
+deque.peekLast();      // peek back
+
+// prefer offer/poll/peek over add/remove/element
+// offer/poll/peek return null on empty; add/remove/element throw exceptions
 ```
 
 **Patterns to Know:**
@@ -352,37 +407,34 @@ q.Remove(q.Front())      // dequeue
 2. **Level-order traversal:** Process tree nodes level by level.
 3. **Sliding window maximum:** Use a monotonic deque.
 
-```go
+```java
 // BFS level-order traversal
-func levelOrder(root *TreeNode) [][]int {
-    if root == nil {
-        return nil
-    }
-    result := [][]int{}
-    queue := []*TreeNode{root}
-    for len(queue) > 0 {
-        level := []int{}
-        size := len(queue)
-        for i := 0; i < size; i++ {
-            node := queue[0]
-            queue = queue[1:]
-            level = append(level, node.Val)
-            if node.Left != nil {
-                queue = append(queue, node.Left)
-            }
-            if node.Right != nil {
-                queue = append(queue, node.Right)
-            }
+List<List<Integer>> levelOrder(TreeNode root) {
+    List<List<Integer>> result = new ArrayList<>();
+    if (root == null) return result;
+
+    Queue<TreeNode> queue = new ArrayDeque<>();
+    queue.offer(root);
+
+    while (!queue.isEmpty()) {
+        int size = queue.size();
+        List<Integer> level = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            TreeNode node = queue.poll();
+            level.add(node.val);
+            if (node.left != null) queue.offer(node.left);
+            if (node.right != null) queue.offer(node.right);
         }
-        result = append(result, level)
+        result.add(level);
     }
-    return result
+    return result;
 }
 ```
 
 **Common Pitfalls:**
-- Using `queue[1:]` repeatedly leaks memory (the old elements can't be GC'd)
-- For performance-critical code, use a circular buffer or `container/list`
+- `LinkedList` implements `Queue` but has more overhead than `ArrayDeque` -- prefer `ArrayDeque`
+- Using `remove()` instead of `poll()` -- `remove()` throws on empty queue
+- Forgetting to snapshot `queue.size()` before the inner loop in level-order BFS (the size changes as you add children)
 
 > **Key Insight:** Queue = BFS. If you need shortest path in an unweighted graph or level-by-level processing, reach for a queue.
 
@@ -408,36 +460,53 @@ A hash map stores key-value pairs with O(1) average-time lookup, insertion, and 
 | Insert | O(1) | O(n) | Worst case with many collisions |
 | Lookup | O(1) | O(n) | Same |
 | Delete | O(1) | O(n) | Same |
-| Iterate | O(n) | O(n) | Order is random in Go |
+| Iterate | O(n) | O(n) | Order not guaranteed for HashMap |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-```go
-// Hash map
-m := make(map[string]int)
-m["alice"] = 90
-m["bob"] = 85
+```java
+// HashMap
+Map<String, Integer> map = new HashMap<>();
+map.put("alice", 90);
+map.get("alice");                        // null if missing
+map.getOrDefault("bob", 0);             // safe default
+map.containsKey("alice");
+map.containsValue(90);
+map.remove("bob");
+map.size();
 
-// Check existence
-if val, ok := m["alice"]; ok {
-    fmt.Println("Found:", val)
+// Idiomatic frequency counting
+map.put(key, map.getOrDefault(key, 0) + 1);
+// or in Java 8+:
+map.merge(key, 1, Integer::sum);
+
+// Iterate
+for (Map.Entry<String, Integer> entry : map.entrySet()) {
+    String k = entry.getKey();
+    int v = entry.getValue();
 }
+for (String key : map.keySet()) { }
+for (int val : map.values()) { }
 
-// Delete
-delete(m, "bob")
+// computeIfAbsent (great for grouping)
+map.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
 
-// Iterate (order is NOT guaranteed)
-for key, val := range m {
-    fmt.Println(key, val)
-}
+// HashSet
+Set<Integer> set = new HashSet<>();
+set.add(42);
+set.contains(42);   // O(1)
+set.remove(42);
+set.size();
 
-// Hash set (use map[T]bool or map[T]struct{})
-seen := make(map[int]struct{})
-seen[42] = struct{}{}
-if _, exists := seen[42]; exists {
-    // 42 is in the set
-}
-// map[T]struct{} uses zero bytes per value vs map[T]bool
+// LinkedHashMap: preserves insertion order
+Map<String, Integer> ordered = new LinkedHashMap<>();
+
+// TreeMap: sorted by key, O(log n) ops
+Map<String, Integer> sorted = new TreeMap<>();
+((TreeMap<String, Integer>) sorted).firstKey();
+((TreeMap<String, Integer>) sorted).lastKey();
+((TreeMap<String, Integer>) sorted).floorKey("m");  // largest key <= "m"
+((TreeMap<String, Integer>) sorted).ceilingKey("m"); // smallest key >= "m"
 ```
 
 **Patterns to Know:**
@@ -447,31 +516,40 @@ if _, exists := seen[42]; exists {
 3. **Grouping:** Group items by a computed key (e.g., anagram grouping).
 4. **Deduplication:** Use a set to track seen elements.
 
-```go
+```java
 // Frequency counting
-freq := make(map[rune]int)
-for _, ch := range s {
-    freq[ch]++
+Map<Character, Integer> freq = new HashMap<>();
+for (char c : s.toCharArray()) {
+    freq.merge(c, 1, Integer::sum);
 }
 
 // Two-sum pattern
-seen := make(map[int]int) // value -> index
-for i, num := range nums {
-    complement := target - num
-    if j, ok := seen[complement]; ok {
-        return []int{j, i}
+Map<Integer, Integer> seen = new HashMap<>(); // value -> index
+for (int i = 0; i < nums.length; i++) {
+    int complement = target - nums[i];
+    if (seen.containsKey(complement)) {
+        return new int[]{seen.get(complement), i};
     }
-    seen[num] = i
+    seen.put(nums[i], i);
+}
+
+// Group anagrams
+Map<String, List<String>> groups = new HashMap<>();
+for (String word : words) {
+    char[] arr = word.toCharArray();
+    Arrays.sort(arr);
+    String key = new String(arr);
+    groups.computeIfAbsent(key, k -> new ArrayList<>()).add(word);
 }
 ```
 
 **Common Pitfalls:**
-- Map iteration order is randomized in Go -- never depend on it
-- Maps are not safe for concurrent access (use `sync.Map` or a mutex)
-- The zero value for missing keys can be misleading (always use the comma-ok idiom)
-- Slices cannot be map keys (use arrays like `[26]int` or convert to string)
+- `HashMap` iteration order is not guaranteed -- use `LinkedHashMap` if order matters
+- Using mutable objects (e.g., arrays) as keys -- arrays don't override `hashCode()`/`equals()`; use `Arrays.toString(arr)` as key instead
+- `map.get(key)` returns `null` if missing, not 0 -- always use `getOrDefault` for numeric values
+- `HashMap` is not thread-safe; use `ConcurrentHashMap` for concurrent access
 
-> **Key Insight:** Whenever you need to look something up by value in O(1), think hash map. It's the most versatile data structure for interview problems.
+> **Key Insight:** Whenever you need to look something up by value in O(1), think HashMap. It's the most versatile data structure for interview problems.
 
 **NeetCode Relevance:** Arrays & Hashing (contains duplicate, two sum, group anagrams, top K frequent).
 
@@ -504,56 +582,44 @@ A binary tree is a hierarchical structure where each node has at most two childr
 | Height | O(n) | Recursive DFS |
 | Count nodes | O(n) | Traverse all |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-```go
-type TreeNode struct {
-    Val   int
-    Left  *TreeNode
-    Right *TreeNode
+```java
+// LeetCode's standard TreeNode definition
+class TreeNode {
+    int val;
+    TreeNode left, right;
+    TreeNode(int val) { this.val = val; }
 }
 
 // Preorder: Root -> Left -> Right
-func preorder(root *TreeNode) {
-    if root == nil {
-        return
-    }
-    fmt.Println(root.Val)  // process
-    preorder(root.Left)
-    preorder(root.Right)
+void preorder(TreeNode root) {
+    if (root == null) return;
+    System.out.println(root.val);  // process
+    preorder(root.left);
+    preorder(root.right);
 }
 
 // Inorder: Left -> Root -> Right (gives sorted order for BST)
-func inorder(root *TreeNode) {
-    if root == nil {
-        return
-    }
-    inorder(root.Left)
-    fmt.Println(root.Val)  // process
-    inorder(root.Right)
+void inorder(TreeNode root) {
+    if (root == null) return;
+    inorder(root.left);
+    System.out.println(root.val);  // process
+    inorder(root.right);
 }
 
 // Postorder: Left -> Right -> Root
-func postorder(root *TreeNode) {
-    if root == nil {
-        return
-    }
-    postorder(root.Left)
-    postorder(root.Right)
-    fmt.Println(root.Val)  // process
+void postorder(TreeNode root) {
+    if (root == null) return;
+    postorder(root.left);
+    postorder(root.right);
+    System.out.println(root.val);  // process
 }
 
 // Height of tree
-func height(root *TreeNode) int {
-    if root == nil {
-        return 0
-    }
-    left := height(root.Left)
-    right := height(root.Right)
-    if left > right {
-        return left + 1
-    }
-    return right + 1
+int height(TreeNode root) {
+    if (root == null) return 0;
+    return 1 + Math.max(height(root.left), height(root.right));
 }
 ```
 
@@ -567,9 +633,9 @@ func height(root *TreeNode) int {
 | Level-order | Level by level | BFS, shortest path |
 
 **Common Pitfalls:**
-- Forgetting the `nil` base case in recursive functions
+- Forgetting the `null` base case in recursive functions
 - Confusing height (root-down) with depth (root-down from top)
-- Stack overflow on very deep trees -- consider iterative DFS
+- Stack overflow on very deep trees -- consider iterative DFS with an explicit `Deque`
 
 > **Key Insight:** Most binary tree problems follow a pattern: recursively solve for left subtree, solve for right subtree, combine results. Think "What info do I need from my children?"
 
@@ -594,61 +660,65 @@ A BST is a binary tree where for every node: all values in the left subtree are 
 | Inorder traversal | O(n) | O(n) | Produces sorted output |
 | Find min/max | O(log n) | O(n) | Go leftmost / rightmost |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-```go
-// Search
-func searchBST(root *TreeNode, val int) *TreeNode {
-    if root == nil || root.Val == val {
-        return root
-    }
-    if val < root.Val {
-        return searchBST(root.Left, val)
-    }
-    return searchBST(root.Right, val)
+```java
+// Custom BST search
+TreeNode searchBST(TreeNode root, int val) {
+    if (root == null || root.val == val) return root;
+    if (val < root.val) return searchBST(root.left, val);
+    return searchBST(root.right, val);
 }
 
-// Insert
-func insertBST(root *TreeNode, val int) *TreeNode {
-    if root == nil {
-        return &TreeNode{Val: val}
-    }
-    if val < root.Val {
-        root.Left = insertBST(root.Left, val)
-    } else {
-        root.Right = insertBST(root.Right, val)
-    }
-    return root
+// Custom BST insert
+TreeNode insertBST(TreeNode root, int val) {
+    if (root == null) return new TreeNode(val);
+    if (val < root.val) root.left = insertBST(root.left, val);
+    else root.right = insertBST(root.right, val);
+    return root;
 }
 
 // Validate BST
-func isValidBST(root *TreeNode) bool {
-    return validate(root, math.MinInt64, math.MaxInt64)
+boolean isValidBST(TreeNode root) {
+    return validate(root, Long.MIN_VALUE, Long.MAX_VALUE);
 }
 
-func validate(node *TreeNode, min, max int) bool {
-    if node == nil {
-        return true
-    }
-    if node.Val <= min || node.Val >= max {
-        return false
-    }
-    return validate(node.Left, min, node.Val) &&
-           validate(node.Right, node.Val, max)
+boolean validate(TreeNode node, long min, long max) {
+    if (node == null) return true;
+    if (node.val <= min || node.val >= max) return false;
+    return validate(node.left, min, node.val) &&
+           validate(node.right, node.val, max);
 }
+
+// Java's built-in balanced BST implementations:
+// TreeMap: sorted key-value map (Red-Black tree internally)
+TreeMap<Integer, String> treeMap = new TreeMap<>();
+treeMap.put(5, "five");
+treeMap.firstKey();          // smallest key
+treeMap.lastKey();           // largest key
+treeMap.floorKey(6);         // largest key <= 6
+treeMap.ceilingKey(4);       // smallest key >= 4
+treeMap.lowerKey(5);         // largest key < 5
+treeMap.higherKey(5);        // smallest key > 5
+
+// TreeSet: sorted set (Red-Black tree internally)
+TreeSet<Integer> treeSet = new TreeSet<>();
+treeSet.add(5);
+treeSet.floor(6);   // largest element <= 6
+treeSet.ceiling(4); // smallest element >= 4
 ```
 
-**Balanced BST Variants (conceptual):**
-- **AVL Tree:** Strictly balanced (height diff <= 1), faster lookups
-- **Red-Black Tree:** Loosely balanced, fewer rotations on insert/delete
-- Go's standard library does not include a BST; use sorted slices + binary search or third-party packages
+**Balanced BST Variants:**
+- **TreeMap / TreeSet:** Java's built-in Red-Black tree -- O(log n) for all operations. Use these in interviews instead of implementing a custom BST.
+- **AVL Tree:** Strictly balanced (height diff <= 1), faster lookups but more complex rotations.
+- **Red-Black Tree:** Loosely balanced, fewer rotations on insert/delete -- what `TreeMap` uses.
 
 **Common Pitfalls:**
 - BST property is about ALL descendants, not just immediate children
-- Duplicate values: decide a convention (left or right) and stay consistent
+- Using `int` bounds for validation -- use `long` to handle `Integer.MIN_VALUE` and `Integer.MAX_VALUE` as node values
 - Deletion with two children: replace with inorder successor (or predecessor)
 
-> **Key Insight:** Inorder traversal of a BST always gives sorted output. If a problem says "BST", think about leveraging the sorted property.
+> **Key Insight:** Inorder traversal of a BST always gives sorted output. In Java, use `TreeMap`/`TreeSet` whenever you need a sorted structure with O(log n) ops.
 
 **NeetCode Relevance:** Trees (validate BST, kth smallest, LCA of BST).
 
@@ -670,56 +740,62 @@ A heap is a complete binary tree where the parent is always smaller (min-heap) o
 
 | Operation | Time Complexity | Notes |
 |-----------|----------------|-------|
-| Insert (push) | O(log n) | Sift up |
-| Extract min/max (pop) | O(log n) | Sift down |
+| Insert (offer) | O(log n) | Sift up |
+| Extract min/max (poll) | O(log n) | Sift down |
 | Peek min/max | O(1) | Root element |
-| Build heap from array | O(n) | Bottom-up heapify |
+| Build heap from collection | O(n) | Bottom-up heapify |
 | Search | O(n) | No ordering guarantee beyond parent-child |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-Go provides `container/heap` which requires implementing the `heap.Interface`:
+Java's `PriorityQueue` is a min-heap by default:
 
-```go
-import "container/heap"
+```java
+// Min-heap (default) -- smallest element at the top
+PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+minHeap.offer(5);           // O(log n) insert
+minHeap.offer(3);
+minHeap.peek();             // O(1) -- returns 3 (min)
+minHeap.poll();             // O(log n) -- removes and returns 3
 
-// Min-heap of ints
-type MinHeap []int
+// Max-heap -- largest element at the top
+PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());
+// or: new PriorityQueue<>((a, b) -> b - a)
 
-func (h MinHeap) Len() int            { return len(h) }
-func (h MinHeap) Less(i, j int) bool   { return h[i] < h[j] }  // < for min, > for max
-func (h MinHeap) Swap(i, j int)        { h[i], h[j] = h[j], h[i] }
+// Custom comparator (e.g., sort by second element of int[])
+PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[1] - b[1]);
+pq.offer(new int[]{1, 5});
+pq.offer(new int[]{2, 3});
+pq.poll(); // returns {2, 3} (smaller second element)
 
-func (h *MinHeap) Push(x interface{}) {
-    *h = append(*h, x.(int))
-}
-
-func (h *MinHeap) Pop() interface{} {
-    old := *h
-    n := len(old)
-    x := old[n-1]
-    *h = old[:n-1]
-    return x
-}
-
-// Usage
-h := &MinHeap{5, 3, 8, 1}
-heap.Init(h)            // O(n) heapify
-heap.Push(h, 2)         // O(log n)
-min := heap.Pop(h).(int) // O(log n), returns 1
+// Build from existing collection
+List<Integer> data = Arrays.asList(5, 3, 8, 1);
+PriorityQueue<Integer> heap = new PriorityQueue<>(data); // O(n)
 ```
 
 **Patterns to Know:**
 
 1. **Top K elements:** Use a min-heap of size K. Push all elements; if heap size > K, pop. Final heap contains top K.
 2. **Kth largest/smallest:** Same as top K, peek the root.
-3. **Merge K sorted lists:** Push first element of each list, pop smallest, push next from that list.
+3. **Merge K sorted lists:** Push first element of each list, poll smallest, push next from that list.
 4. **Median from data stream:** Use two heaps (max-heap for lower half, min-heap for upper half).
 
+```java
+// Top K frequent elements
+PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[1] - b[1]); // min-heap by freq
+Map<Integer, Integer> freq = new HashMap<>();
+for (int num : nums) freq.merge(num, 1, Integer::sum);
+
+for (Map.Entry<Integer, Integer> e : freq.entrySet()) {
+    pq.offer(new int[]{e.getKey(), e.getValue()});
+    if (pq.size() > k) pq.poll(); // evict least frequent
+}
+```
+
 **Common Pitfalls:**
-- Go's `container/heap` uses an interface with pointer receivers for Push/Pop
-- Default is min-heap; for max-heap, flip the `Less` comparison
-- Don't confuse `heap.Push` (the package function) with `h.Push` (the interface method)
+- `PriorityQueue` default is min-heap -- remember to reverse for max-heap
+- Don't use `(a, b) -> b - a` as a comparator for large integers (integer overflow) -- use `Integer.compare(b, a)` or `Collections.reverseOrder()`
+- `PriorityQueue` does not support O(1) access to arbitrary elements or O(log n) decrease-key
 
 > **Key Insight:** Whenever you need to repeatedly find the minimum (or maximum) from a dynamic collection, think heap. "Top K" and "Kth largest" are immediate heap signals.
 
@@ -744,60 +820,61 @@ A trie is a tree-like structure where each node represents a character. Paths fr
 | Delete word | O(m) | May need cleanup of empty nodes |
 | Autocomplete | O(m + k) | m = prefix length, k = results |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-```go
-type TrieNode struct {
-    Children map[rune]*TrieNode  // or [26]*TrieNode for lowercase ASCII
-    IsEnd    bool
+```java
+class TrieNode {
+    TrieNode[] children = new TrieNode[26]; // for lowercase a-z
+    boolean isEnd = false;
 }
 
-type Trie struct {
-    Root *TrieNode
-}
+class Trie {
+    private final TrieNode root = new TrieNode();
 
-func NewTrie() *Trie {
-    return &Trie{Root: &TrieNode{Children: make(map[rune]*TrieNode)}}
-}
-
-func (t *Trie) Insert(word string) {
-    node := t.Root
-    for _, ch := range word {
-        if _, ok := node.Children[ch]; !ok {
-            node.Children[ch] = &TrieNode{Children: make(map[rune]*TrieNode)}
+    public void insert(String word) {
+        TrieNode node = root;
+        for (char c : word.toCharArray()) {
+            int idx = c - 'a';
+            if (node.children[idx] == null) {
+                node.children[idx] = new TrieNode();
+            }
+            node = node.children[idx];
         }
-        node = node.Children[ch]
+        node.isEnd = true;
     }
-    node.IsEnd = true
+
+    public boolean search(String word) {
+        TrieNode node = root;
+        for (char c : word.toCharArray()) {
+            int idx = c - 'a';
+            if (node.children[idx] == null) return false;
+            node = node.children[idx];
+        }
+        return node.isEnd;
+    }
+
+    public boolean startsWith(String prefix) {
+        TrieNode node = root;
+        for (char c : prefix.toCharArray()) {
+            int idx = c - 'a';
+            if (node.children[idx] == null) return false;
+            node = node.children[idx];
+        }
+        return true;
+    }
 }
 
-func (t *Trie) Search(word string) bool {
-    node := t.Root
-    for _, ch := range word {
-        if _, ok := node.Children[ch]; !ok {
-            return false
-        }
-        node = node.Children[ch]
-    }
-    return node.IsEnd
-}
-
-func (t *Trie) StartsWith(prefix string) bool {
-    node := t.Root
-    for _, ch := range prefix {
-        if _, ok := node.Children[ch]; !ok {
-            return false
-        }
-        node = node.Children[ch]
-    }
-    return true
+// For non-ASCII or variable alphabets, use HashMap instead:
+class TrieNodeGeneral {
+    Map<Character, TrieNodeGeneral> children = new HashMap<>();
+    boolean isEnd = false;
 }
 ```
 
 **Common Pitfalls:**
-- Using `map[rune]*TrieNode` is flexible but slower; `[26]*TrieNode` is faster for lowercase ASCII
-- Forgetting to mark `IsEnd` -- "app" and "apple" need distinct flags
-- Memory usage can be high with sparse tries
+- `children[c - 'a']` only works for lowercase ASCII -- use a `HashMap` for general characters
+- Forgetting to mark `isEnd = true` -- "app" and "apple" need distinct flags
+- Returning `true` from `search` just because the path exists (without checking `isEnd`)
 
 > **Key Insight:** Tries excel when you need prefix-based operations. If a problem involves dictionaries, word search, or autocomplete, a trie is likely the answer.
 
@@ -827,45 +904,46 @@ A graph is a set of vertices (nodes) connected by edges. Graphs can be:
 | Adjacency Matrix | O(V^2) | O(1) | O(1) | O(V) |
 | Edge List | O(E) | O(1) | O(E) | O(E) |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-```go
+```java
 // Adjacency list (most common for interviews)
-graph := make(map[int][]int)  // node -> list of neighbors
+Map<Integer, List<Integer>> graph = new HashMap<>();
 
 // Add undirected edge
-graph[u] = append(graph[u], v)
-graph[v] = append(graph[v], u)
+graph.computeIfAbsent(u, k -> new ArrayList<>()).add(v);
+graph.computeIfAbsent(v, k -> new ArrayList<>()).add(u);
 
 // Add directed edge
-graph[u] = append(graph[u], v)
+graph.computeIfAbsent(u, k -> new ArrayList<>()).add(v);
+
+// For dense graphs or when nodes are 0..n-1, use array of lists
+List<List<Integer>> adjList = new ArrayList<>();
+for (int i = 0; i < n; i++) adjList.add(new ArrayList<>());
+adjList.get(u).add(v);
 
 // Adjacency matrix (when V is small and edge queries are frequent)
-n := 5
-matrix := make([][]bool, n)
-for i := range matrix {
-    matrix[i] = make([]bool, n)
-}
-matrix[u][v] = true  // directed edge from u to v
+boolean[][] matrix = new boolean[n][n];
+matrix[u][v] = true;  // directed edge from u to v
 
 // Weighted adjacency list
-type Edge struct {
-    To, Weight int
-}
-graph := make(map[int][]Edge)
-graph[u] = append(graph[u], Edge{To: v, Weight: w})
+// Use int[] or a helper class to store (neighbor, weight)
+Map<Integer, List<int[]>> weightedGraph = new HashMap<>();
+weightedGraph.computeIfAbsent(u, k -> new ArrayList<>())
+             .add(new int[]{v, weight});
 ```
 
 **Key Algorithms (brief, see Searches syllabus for details):**
 - **DFS:** Explore as deep as possible, then backtrack. Use for connectivity, cycle detection, topological sort.
 - **BFS:** Explore level by level. Use for shortest path (unweighted).
 - **Topological Sort:** Order nodes so all edges go forward (DAGs only). Use Kahn's algorithm (BFS with in-degrees) or DFS-based.
-- **Dijkstra's:** Shortest path in weighted graphs (non-negative weights). Uses a priority queue.
+- **Dijkstra's:** Shortest path in weighted graphs (non-negative weights). Uses a `PriorityQueue`.
 
 **Common Pitfalls:**
 - Forgetting to track visited nodes leads to infinite loops in cyclic graphs
 - Confusing directed vs undirected when building adjacency lists
 - Off-by-one with 0-indexed vs 1-indexed nodes
+- Using `graph.get(node)` without a null check -- use `getOrDefault(node, Collections.emptyList())`
 
 > **Key Insight:** Most graph problems boil down to: (1) build the graph from the input, (2) run DFS or BFS with appropriate state tracking. Identify what the "nodes" and "edges" represent -- sometimes they're not obvious.
 
@@ -889,51 +967,47 @@ Union-Find maintains a collection of disjoint sets and supports two operations e
 | Connected? | O(alpha(n)) ~ O(1) | Same root = same set |
 | Count components | O(1) | Track during unions |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-```go
-type UnionFind struct {
-    parent []int
-    rank   []int
-    count  int  // number of components
-}
+```java
+class UnionFind {
+    int[] parent, rank;
+    int count; // number of components
 
-func NewUnionFind(n int) *UnionFind {
-    parent := make([]int, n)
-    rank := make([]int, n)
-    for i := 0; i < n; i++ {
-        parent[i] = i  // each element is its own root
+    UnionFind(int n) {
+        parent = new int[n];
+        rank = new int[n];
+        count = n;
+        for (int i = 0; i < n; i++) parent[i] = i;
     }
-    return &UnionFind{parent: parent, rank: rank, count: n}
-}
 
-func (uf *UnionFind) Find(x int) int {
-    if uf.parent[x] != x {
-        uf.parent[x] = uf.Find(uf.parent[x])  // path compression
+    int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]); // path compression
+        }
+        return parent[x];
     }
-    return uf.parent[x]
-}
 
-func (uf *UnionFind) Union(x, y int) bool {
-    rootX, rootY := uf.Find(x), uf.Find(y)
-    if rootX == rootY {
-        return false  // already in same set
-    }
-    // union by rank
-    if uf.rank[rootX] < uf.rank[rootY] {
-        uf.parent[rootX] = rootY
-    } else if uf.rank[rootX] > uf.rank[rootY] {
-        uf.parent[rootY] = rootX
-    } else {
-        uf.parent[rootY] = rootX
-        uf.rank[rootX]++
-    }
-    uf.count--
-    return true
-}
+    boolean union(int x, int y) {
+        int rootX = find(x), rootY = find(y);
+        if (rootX == rootY) return false; // already connected
 
-func (uf *UnionFind) Connected(x, y int) bool {
-    return uf.Find(x) == uf.Find(y)
+        // union by rank
+        if (rank[rootX] < rank[rootY]) {
+            parent[rootX] = rootY;
+        } else if (rank[rootX] > rank[rootY]) {
+            parent[rootY] = rootX;
+        } else {
+            parent[rootY] = rootX;
+            rank[rootX]++;
+        }
+        count--;
+        return true;
+    }
+
+    boolean connected(int x, int y) {
+        return find(x) == find(y);
+    }
 }
 ```
 
@@ -971,47 +1045,47 @@ A monotonic stack maintains elements in strictly increasing or decreasing order.
 | Pop | O(1) | Standard pop |
 | Overall for n elements | O(n) | Each element pushed/popped at most once |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-```go
+```java
 // Monotonic decreasing stack: next greater element to the right
-func nextGreater(nums []int) []int {
-    n := len(nums)
-    ans := make([]int, n)
-    for i := range ans { ans[i] = -1 }
-    stack := []int{}  // indices
+int[] nextGreater(int[] nums) {
+    int n = nums.length;
+    int[] ans = new int[n];
+    Arrays.fill(ans, -1);
+    Deque<Integer> stack = new ArrayDeque<>(); // stores indices
 
-    for i := 0; i < n; i++ {
-        for len(stack) > 0 && nums[i] > nums[stack[len(stack)-1]] {
-            top := stack[len(stack)-1]
-            stack = stack[:len(stack)-1]
-            ans[top] = nums[i]
+    for (int i = 0; i < n; i++) {
+        while (!stack.isEmpty() && nums[i] > nums[stack.peek()]) {
+            int top = stack.pop();
+            ans[top] = nums[i];
         }
-        stack = append(stack, i)
+        stack.push(i);
     }
-    return ans
+    return ans;
 }
 
 // Monotonic deque: sliding window maximum
-func maxSlidingWindow(nums []int, k int) []int {
-    deque := []int{}  // indices, front has the max
-    result := []int{}
+int[] maxSlidingWindow(int[] nums, int k) {
+    int n = nums.length;
+    int[] result = new int[n - k + 1];
+    Deque<Integer> deque = new ArrayDeque<>(); // indices, front has max
 
-    for i := 0; i < len(nums); i++ {
+    for (int i = 0; i < n; i++) {
         // Remove indices outside window
-        if len(deque) > 0 && deque[0] <= i-k {
-            deque = deque[1:]
+        while (!deque.isEmpty() && deque.peekFirst() <= i - k) {
+            deque.pollFirst();
         }
         // Remove smaller elements from back
-        for len(deque) > 0 && nums[deque[len(deque)-1]] <= nums[i] {
-            deque = deque[:len(deque)-1]
+        while (!deque.isEmpty() && nums[deque.peekLast()] <= nums[i]) {
+            deque.pollLast();
         }
-        deque = append(deque, i)
-        if i >= k-1 {
-            result = append(result, nums[deque[0]])
+        deque.offerLast(i);
+        if (i >= k - 1) {
+            result[i - k + 1] = nums[deque.peekFirst()];
         }
     }
-    return result
+    return result;
 }
 ```
 
@@ -1039,34 +1113,35 @@ These are specialized tree structures for answering range queries (sum, min, max
 - **Segment tree:** Dynamic updates + range queries, supports min/max/sum/GCD
 - **Fenwick tree:** Dynamic updates + prefix sum queries (simpler to implement than segment tree)
 
-**Go Pseudocode (Fenwick Tree):**
+**Java Implementation (Fenwick Tree):**
 
-```go
-type BIT struct {
-    tree []int
-    n    int
-}
+```java
+class BIT {
+    int[] tree;
+    int n;
 
-func NewBIT(n int) *BIT {
-    return &BIT{tree: make([]int, n+1), n: n}
-}
-
-func (b *BIT) Update(i, delta int) {
-    for ; i <= b.n; i += i & (-i) {
-        b.tree[i] += delta
+    BIT(int n) {
+        this.n = n;
+        this.tree = new int[n + 1]; // 1-indexed
     }
-}
 
-func (b *BIT) Query(i int) int {  // prefix sum [1..i]
-    sum := 0
-    for ; i > 0; i -= i & (-i) {
-        sum += b.tree[i]
+    void update(int i, int delta) {
+        for (; i <= n; i += i & (-i)) {
+            tree[i] += delta;
+        }
     }
-    return sum
-}
 
-func (b *BIT) RangeQuery(l, r int) int {
-    return b.Query(r) - b.Query(l-1)
+    int query(int i) { // prefix sum [1..i]
+        int sum = 0;
+        for (; i > 0; i -= i & (-i)) {
+            sum += tree[i];
+        }
+        return sum;
+    }
+
+    int rangeQuery(int l, int r) {
+        return query(r) - query(l - 1);
+    }
 }
 ```
 
@@ -1090,80 +1165,98 @@ An LRU (Least Recently Used) Cache evicts the least recently accessed item when 
 | Get | O(1) | Lookup + move to front |
 | Put | O(1) | Insert/update + possibly evict |
 
-**Go Implementation Notes:**
+**Java Implementation Notes:**
 
-```go
-type LRUNode struct {
-    Key, Val   int
-    Prev, Next *LRUNode
-}
+```java
+// Option 1: Use LinkedHashMap (simplest -- know this for interviews)
+class LRUCache extends LinkedHashMap<Integer, Integer> {
+    private final int capacity;
 
-type LRUCache struct {
-    cap        int
-    cache      map[int]*LRUNode
-    head, tail *LRUNode  // dummy nodes
-}
+    LRUCache(int capacity) {
+        super(capacity, 0.75f, true); // accessOrder = true
+        this.capacity = capacity;
+    }
 
-func NewLRUCache(capacity int) *LRUCache {
-    head := &LRUNode{}
-    tail := &LRUNode{}
-    head.Next = tail
-    tail.Prev = head
-    return &LRUCache{
-        cap:   capacity,
-        cache: make(map[int]*LRUNode),
-        head:  head,
-        tail:  tail,
+    public int get(int key) {
+        return getOrDefault(key, -1);
+    }
+
+    public void put(int key, int value) {
+        super.put(key, value);
+    }
+
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<Integer, Integer> eldest) {
+        return size() > capacity;
     }
 }
 
-// Remove node from its current position
-func (l *LRUCache) remove(node *LRUNode) {
-    node.Prev.Next = node.Next
-    node.Next.Prev = node.Prev
-}
-
-// Insert node right after head (most recent)
-func (l *LRUCache) insertFront(node *LRUNode) {
-    node.Next = l.head.Next
-    node.Prev = l.head
-    l.head.Next.Prev = node
-    l.head.Next = node
-}
-
-func (l *LRUCache) Get(key int) int {
-    if node, ok := l.cache[key]; ok {
-        l.remove(node)
-        l.insertFront(node)
-        return node.Val
+// Option 2: Custom doubly linked list + HashMap (demonstrates understanding)
+class LRUCacheCustom {
+    private static class Node {
+        int key, val;
+        Node prev, next;
+        Node(int key, int val) { this.key = key; this.val = val; }
     }
-    return -1
-}
 
-func (l *LRUCache) Put(key, value int) {
-    if node, ok := l.cache[key]; ok {
-        l.remove(node)
-        node.Val = value
-        l.insertFront(node)
-        return
+    private final int cap;
+    private final Map<Integer, Node> cache = new HashMap<>();
+    private final Node head = new Node(0, 0); // dummy head (most recent)
+    private final Node tail = new Node(0, 0); // dummy tail (least recent)
+
+    LRUCacheCustom(int capacity) {
+        this.cap = capacity;
+        head.next = tail;
+        tail.prev = head;
     }
-    node := &LRUNode{Key: key, Val: value}
-    l.cache[key] = node
-    l.insertFront(node)
-    if len(l.cache) > l.cap {
-        lru := l.tail.Prev
-        l.remove(lru)
-        delete(l.cache, lru.Key)
+
+    private void remove(Node node) {
+        node.prev.next = node.next;
+        node.next.prev = node.prev;
+    }
+
+    private void insertFront(Node node) {
+        node.next = head.next;
+        node.prev = head;
+        head.next.prev = node;
+        head.next = node;
+    }
+
+    public int get(int key) {
+        Node node = cache.get(key);
+        if (node == null) return -1;
+        remove(node);
+        insertFront(node);
+        return node.val;
+    }
+
+    public void put(int key, int value) {
+        Node node = cache.get(key);
+        if (node != null) {
+            remove(node);
+            node.val = value;
+            insertFront(node);
+        } else {
+            node = new Node(key, value);
+            cache.put(key, node);
+            insertFront(node);
+            if (cache.size() > cap) {
+                Node lru = tail.prev;
+                remove(lru);
+                cache.remove(lru.key);
+            }
+        }
     }
 }
 ```
 
 **Common Pitfalls:**
 - Forgetting to store the key in the node (needed for eviction to delete from the map)
-- Not using dummy head/tail nodes (leads to nil-check edge cases)
+- Not using dummy head/tail nodes (leads to null-check edge cases)
 - Forgetting to update the map on put when key already exists
+- With `LinkedHashMap`, you must pass `accessOrder = true` to the constructor, not just `true`
 
-> **Key Insight:** LRU Cache = HashMap + Doubly Linked List. The map gives O(1) access, the list gives O(1) ordering. This is a classic design question.
+> **Key Insight:** LRU Cache = HashMap + Doubly Linked List. The map gives O(1) access, the list gives O(1) ordering. Java's `LinkedHashMap` with `accessOrder=true` handles this automatically.
 
 **NeetCode Relevance:** Linked List (LRU Cache design problem).
 
@@ -1173,14 +1266,14 @@ func (l *LRUCache) Put(key, value int) {
 
 Use this to track which data structures you've studied and implemented:
 
-- [ ] Arrays / Slices
+- [ ] Arrays / ArrayList
 - [ ] Strings
 - [ ] Linked Lists
 - [ ] Stacks
 - [ ] Queues
 - [ ] Hash Maps / Hash Sets
 - [ ] Binary Trees
-- [ ] Binary Search Trees
+- [ ] Binary Search Trees (TreeMap/TreeSet)
 - [ ] Heaps / Priority Queues
 - [ ] Tries
 - [ ] Graphs

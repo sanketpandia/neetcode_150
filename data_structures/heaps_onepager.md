@@ -6,13 +6,10 @@ A **heap** is a complete binary tree where each node satisfies the **heap proper
 
 **Priority queue** is the abstract data type; **heap** is the concrete implementation. Think of a priority queue as an interface that promises "give me the highest (or lowest) priority element efficiently."
 
-**Complete Binary Tree:** All levels are fully filled except possibly the last, which fills left to right. This property allows heaps to be efficiently stored in an array without pointers:
-- For 0-indexed array at position `i`:
-  - Parent: `(i - 1) / 2`
-  - Left child: `2*i + 1`
-  - Right child: `2*i + 2`
+In Java, `PriorityQueue<E>` is a **min-heap** by default. To get a max-heap, pass `Collections.reverseOrder()` or a custom comparator. No boilerplate needed -- unlike Go's `container/heap`.
 
-In Go, the `container/heap` package provides heap operations but requires you to implement the `heap.Interface` (Len, Less, Swap, Push, Pop). This design gives flexibility but requires some boilerplate.
+**Complete Binary Tree:** Stored implicitly in an array without pointers:
+- For 0-indexed position `i`: Parent = `(i - 1) / 2`, Left child = `2*i + 1`, Right child = `2*i + 2`
 
 ---
 
@@ -20,15 +17,14 @@ In Go, the `container/heap` package provides heap operations but requires you to
 
 | Operation | Time Complexity | Notes |
 |-----------|----------------|-------|
-| Insert (push) | O(log n) | Add to end, sift up to restore heap property |
-| Extract min/max (pop) | O(log n) | Remove root, move last to root, sift down |
-| Peek min/max | O(1) | Root element (index 0) |
+| Insert (offer) | O(log n) | Add to end, sift up to restore heap property |
+| Extract min/max (poll) | O(log n) | Remove root, move last to root, sift down |
+| Peek min/max | O(1) | `peek()` -- root element |
 | Build heap from array | O(n) | Bottom-up heapify (Floyd's algorithm) |
 | Search arbitrary element | O(n) | No ordering beyond parent-child |
-| Delete arbitrary element | O(log n) | If you have the index (rare) |
-| Heapify (re-establish property) | O(log n) | Per element, O(n) for entire array |
+| Contains | O(n) | Linear scan |
 
-**Space Complexity:** O(n) for storing n elements in the array.
+**Space Complexity:** O(n) for storing n elements.
 
 **Why build is O(n), not O(n log n):** Bottom-up heapify processes lower levels (many nodes) with small sift-down distances, and upper levels (few nodes) with large distances. The math works out to O(n) total.
 
@@ -36,217 +32,123 @@ In Go, the `container/heap` package provides heap operations but requires you to
 
 ## Implementation Patterns
 
-### 1. Min-Heap Using container/heap
+### 1. Min-Heap (Default)
 
-```go
-import "container/heap"
-
+```java
 // Min-heap of integers
-type MinHeap []int
-
-func (h MinHeap) Len() int            { return len(h) }
-func (h MinHeap) Less(i, j int) bool  { return h[i] < h[j] }  // < for min-heap
-func (h MinHeap) Swap(i, j int)       { h[i], h[j] = h[j], h[i] }
-
-func (h *MinHeap) Push(x interface{}) {
-    *h = append(*h, x.(int))
-}
-
-func (h *MinHeap) Pop() interface{} {
-    old := *h
-    n := len(old)
-    x := old[n-1]
-    *h = old[:n-1]
-    return x
-}
-
-// Usage
-func main() {
-    h := &MinHeap{5, 3, 8, 1, 9}
-    heap.Init(h)              // O(n) heapify
-    heap.Push(h, 2)           // O(log n)
-    min := heap.Pop(h).(int)  // O(log n), returns 1
-    peek := (*h)[0]           // O(1) peek at minimum
-}
+PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+minHeap.offer(5);
+minHeap.offer(3);
+minHeap.offer(8);
+int min = minHeap.peek();   // 3 -- O(1)
+int removed = minHeap.poll(); // 3 -- O(log n)
+int size = minHeap.size();
 ```
 
-### 2. Max-Heap (Flip the Comparison)
+### 2. Max-Heap (Reverse Order)
 
-```go
-type MaxHeap []int
-
-func (h MaxHeap) Len() int            { return len(h) }
-func (h MaxHeap) Less(i, j int) bool  { return h[i] > h[j] }  // > for max-heap
-func (h MaxHeap) Swap(i, j int)       { h[i], h[j] = h[j], h[i] }
-
-func (h *MaxHeap) Push(x interface{}) {
-    *h = append(*h, x.(int))
-}
-
-func (h *MaxHeap) Pop() interface{} {
-    old := *h
-    n := len(old)
-    x := old[n-1]
-    *h = old[:n-1]
-    return x
-}
+```java
+// Max-heap using reverseOrder comparator
+PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());
+maxHeap.offer(5);
+maxHeap.offer(3);
+maxHeap.offer(8);
+int max = maxHeap.peek();   // 8
+maxHeap.poll();             // removes 8
 ```
 
-### 3. Custom Type Heap (e.g., pairs)
+### 3. Custom Comparator Heap (e.g., pairs or objects)
 
-```go
-type Item struct {
-    value    int
-    priority int
-}
+```java
+// Min-heap ordered by second element of int[] pair
+PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[1] - b[1]);
+pq.offer(new int[]{1, 5});
+pq.offer(new int[]{2, 3});
+int[] smallest = pq.poll();  // [2, 3] -- smallest second element
 
-type PriorityQueue []*Item
-
-func (pq PriorityQueue) Len() int { return len(pq) }
-func (pq PriorityQueue) Less(i, j int) bool {
-    return pq[i].priority < pq[j].priority  // min-heap by priority
-}
-func (pq PriorityQueue) Swap(i, j int) { pq[i], pq[j] = pq[j], pq[i] }
-
-func (pq *PriorityQueue) Push(x interface{}) {
-    item := x.(*Item)
-    *pq = append(*pq, item)
-}
-
-func (pq *PriorityQueue) Pop() interface{} {
-    old := *pq
-    n := len(old)
-    item := old[n-1]
-    *pq = old[:n-1]
-    return item
-}
+// Min-heap of strings by length
+PriorityQueue<String> byLength = new PriorityQueue<>(
+    Comparator.comparingInt(String::length)
+);
 ```
 
-### 4. Top K Elements Pattern
+### 4. Build Heap from Existing Collection
+
+```java
+// O(n) initialization from collection
+List<Integer> nums = Arrays.asList(5, 3, 8, 1, 9);
+PriorityQueue<Integer> heap = new PriorityQueue<>(nums);
+// Now heap contains all elements with heap property
+```
+
+### 5. Top K Elements Pattern
 
 Use a min-heap of size K to track the K largest elements.
 
-```go
-func findKthLargest(nums []int, k int) int {
-    h := &MinHeap{}
-    heap.Init(h)
-
-    for _, num := range nums {
-        heap.Push(h, num)
-        if h.Len() > k {
-            heap.Pop(h)  // remove smallest
+```java
+int findKthLargest(int[] nums, int k) {
+    PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+    for (int num : nums) {
+        minHeap.offer(num);
+        if (minHeap.size() > k) {
+            minHeap.poll();  // remove smallest
         }
     }
-    return (*h)[0]  // kth largest is the min of the K largest
+    return minHeap.peek();  // kth largest is the min of the K largest
 }
 ```
 
-**Why min-heap for K largest?** We want to maintain the K largest elements seen so far. The smallest of these K is the Kth largest overall. When a new element comes in, if it's larger than the current smallest, we evict the smallest and add the new element.
+**Why min-heap for K largest?** We maintain the K largest elements seen so far. The smallest of these K is the Kth largest overall. When a new element arrives, if it's larger than the current smallest, we evict the smallest.
 
-### 5. Merge K Sorted Lists
+### 6. Merge K Sorted Lists
 
 Use a min-heap to track the smallest current element from each list.
 
-```go
-type ListNode struct {
-    Val  int
-    Next *ListNode
-}
-
-type HeapNode struct {
-    node *ListNode
-}
-
-type MinListHeap []HeapNode
-
-func (h MinListHeap) Len() int            { return len(h) }
-func (h MinListHeap) Less(i, j int) bool  { return h[i].node.Val < h[j].node.Val }
-func (h MinListHeap) Swap(i, j int)       { h[i], h[j] = h[j], h[i] }
-
-func (h *MinListHeap) Push(x interface{}) {
-    *h = append(*h, x.(HeapNode))
-}
-
-func (h *MinListHeap) Pop() interface{} {
-    old := *h
-    n := len(old)
-    x := old[n-1]
-    *h = old[:n-1]
-    return x
-}
-
-func mergeKLists(lists []*ListNode) *ListNode {
-    h := &MinListHeap{}
-    heap.Init(h)
-
+```java
+ListNode mergeKLists(ListNode[] lists) {
+    PriorityQueue<ListNode> heap = new PriorityQueue<>(
+        (a, b) -> a.val - b.val
+    );
     // Initialize heap with first node of each list
-    for _, list := range lists {
-        if list != nil {
-            heap.Push(h, HeapNode{node: list})
-        }
+    for (ListNode list : lists) {
+        if (list != null) heap.offer(list);
     }
-
-    dummy := &ListNode{}
-    current := dummy
-
-    for h.Len() > 0 {
-        smallest := heap.Pop(h).(HeapNode)
-        current.Next = smallest.node
-        current = current.Next
-
-        if smallest.node.Next != nil {
-            heap.Push(h, HeapNode{node: smallest.node.Next})
-        }
+    ListNode dummy = new ListNode(0);
+    ListNode curr = dummy;
+    while (!heap.isEmpty()) {
+        ListNode node = heap.poll();
+        curr.next = node;
+        curr = curr.next;
+        if (node.next != null) heap.offer(node.next);
     }
-
-    return dummy.Next
+    return dummy.next;
 }
 ```
 
-### 6. Two-Heap Median Finder
+### 7. Two-Heap Median Finder
 
 Maintain two heaps: max-heap for lower half, min-heap for upper half.
 
-```go
-type MedianFinder struct {
-    lower *MaxHeap  // max-heap for smaller half
-    upper *MinHeap  // min-heap for larger half
-}
+```java
+class MedianFinder {
+    PriorityQueue<Integer> lower = new PriorityQueue<>(Collections.reverseOrder()); // max-heap
+    PriorityQueue<Integer> upper = new PriorityQueue<>();  // min-heap
 
-func Constructor() MedianFinder {
-    lower := &MaxHeap{}
-    upper := &MinHeap{}
-    heap.Init(lower)
-    heap.Init(upper)
-    return MedianFinder{lower: lower, upper: upper}
-}
-
-func (mf *MedianFinder) AddNum(num int) {
-    // Add to lower half by default
-    heap.Push(mf.lower, num)
-
-    // Balance: ensure all elements in lower <= all elements in upper
-    if mf.lower.Len() > 0 && mf.upper.Len() > 0 && (*mf.lower)[0] > (*mf.upper)[0] {
-        val := heap.Pop(mf.lower).(int)
-        heap.Push(mf.upper, val)
+    void addNum(int num) {
+        lower.offer(num);
+        // Ensure all in lower <= all in upper
+        if (!upper.isEmpty() && lower.peek() > upper.peek()) {
+            upper.offer(lower.poll());
+        }
+        // Balance sizes: lower can have at most 1 more element
+        if (lower.size() > upper.size() + 1) upper.offer(lower.poll());
+        if (upper.size() > lower.size())    lower.offer(upper.poll());
     }
 
-    // Balance sizes: lower can have at most 1 more element than upper
-    if mf.lower.Len() > mf.upper.Len()+1 {
-        val := heap.Pop(mf.lower).(int)
-        heap.Push(mf.upper, val)
+    double findMedian() {
+        if (lower.size() > upper.size()) return lower.peek();
+        return (lower.peek() + upper.peek()) / 2.0;
     }
-    if mf.upper.Len() > mf.lower.Len() {
-        val := heap.Pop(mf.upper).(int)
-        heap.Push(mf.lower, val)
-    }
-}
-
-func (mf *MedianFinder) FindMedian() float64 {
-    if mf.lower.Len() > mf.upper.Len() {
-        return float64((*mf.lower)[0])
-    }
-    return float64((*mf.lower)[0]+(*mf.upper)[0]) / 2.0
 }
 ```
 
@@ -256,40 +158,33 @@ func (mf *MedianFinder) FindMedian() float64 {
 
 | Scenario | Use Heap? | Alternative |
 |----------|-----------|-------------|
-| Need repeated access to min/max | Yes | Sorting + iteration (O(n log n) once, but inflexible) |
+| Need repeated access to min/max | Yes | Sorting + iteration (O(n log n) once, inflexible) |
 | Top K elements | Yes | Sorting entire array (O(n log n) vs O(n log k)) |
 | Dynamic dataset with changing priorities | Yes | Sorted array (O(n) insert) |
 | Find median in a stream | Yes (two heaps) | Sorting after each insert (expensive) |
 | Merge K sorted lists/arrays | Yes | Merge two at a time (less efficient) |
-| Task scheduling by priority | Yes | - |
-| Static dataset, one-time min/max | No | Simple linear scan (O(n)) |
-| Need to access arbitrary elements | No | Array or hash map |
+| Task scheduling by priority | Yes | -- |
+| Static dataset, one-time min/max | No | Simple linear scan O(n) |
 
 ---
 
 ## Common Pitfalls
 
-1. **Confusing `heap.Push` with `h.Push`.** Use `heap.Push(h, val)` (the package function), not `h.Push(val)`. The package function calls your `Push` method then fixes the heap property.
+1. **Java's `PriorityQueue` is a min-heap.** Many candidates assume max-heap. Use `Collections.reverseOrder()` or negate values `(-val)` for max-heap behavior.
 
-2. **Forgetting to use pointer receivers.** The `Push` and `Pop` methods must have pointer receivers (`*MinHeap`) to modify the underlying slice.
+2. **Comparator integer overflow.** Using `(a, b) -> a - b` can overflow if values are large (e.g., `Integer.MIN_VALUE`). Use `Integer.compare(a, b)` instead.
 
-3. **Wrong comparison for max-heap.** Min-heap uses `<`; max-heap uses `>`. Easy to mix up.
+3. **`PriorityQueue` doesn't support O(1) `contains`.** `contains()` is O(n). If you need frequent membership checks, maintain a separate `HashSet`.
 
-4. **Not calling `heap.Init`.** If you start with a non-empty slice, you must call `heap.Init(h)` to establish the heap property. Skipping this leads to incorrect behavior.
+4. **Modifying elements after insertion.** `PriorityQueue` doesn't reorder when you modify an element directly. Remove and re-add if priority changes.
 
-5. **Accessing last element instead of first for peek.** The min/max is always at index 0, not `len(h)-1`.
+5. **`poll()` on empty heap returns `null` (no exception).** Check `isEmpty()` or use `peek()` first if you're unsure.
 
-6. **Modifying heap directly.** Don't do `(*h)[0] = newVal` to change the root. Use `heap.Pop` followed by `heap.Push`, or use `heap.Fix` if you know the index.
-
-7. **Using heap for problems that don't need it.** If you can solve the problem with a single pass or simple sorting, a heap adds unnecessary complexity.
-
-8. **Integer overflow in two-heap median.** When computing `(lower + upper) / 2`, cast to `float64` before division to avoid truncation.
+6. **Using heap when problem doesn't need it.** If you can solve the problem with a single pass or simple sorting, a heap adds unnecessary complexity.
 
 ---
 
 ## Interview Relevance
-
-Heaps are essential for "Top K", "Kth largest/smallest", and streaming data problems.
 
 | Pattern | Signal Words | Example Problems |
 |---------|--------------|------------------|
@@ -297,7 +192,7 @@ Heaps are essential for "Top K", "Kth largest/smallest", and streaming data prob
 | Merge K sorted | "merge K", "K sorted lists/arrays" | Merge K Sorted Lists |
 | Streaming median | "median from data stream", "running median" | Find Median from Data Stream |
 | Scheduling / Priority | "task scheduler", "meeting rooms", "priority" | Task Scheduler, Meeting Rooms II |
-| Greedy with ordering | "last stone weight", "connect ropes" | Last Stone Weight, Minimum Cost to Connect Sticks |
+| Greedy with ordering | "last stone weight", "connect ropes" | Last Stone Weight |
 
 **Interview Insight:** Whenever you see "Kth", think heap. When you need to repeatedly find min/max from a changing dataset, think heap. Heaps turn O(n) repeated scans into O(log n) operations.
 
@@ -309,26 +204,23 @@ Heaps are essential for "Top K", "Kth largest/smallest", and streaming data prob
 |---|---------|------------|-------------|------------|
 | 1 | Kth Largest Element in an Array | Medium | Min-heap of size K | 215 |
 | 2 | Last Stone Weight | Easy | Max-heap simulation | 1046 |
-| 3 | K Closest Points to Origin | Medium | Max-heap of size K (or min-heap) | 973 |
+| 3 | K Closest Points to Origin | Medium | Max-heap of size K | 973 |
 | 4 | Task Scheduler | Medium | Max-heap for frequencies | 621 |
 | 5 | Find Median from Data Stream | Hard | Two heaps (max + min) | 295 |
 | 6 | Merge K Sorted Lists | Hard | Min-heap with K list heads | 23 |
 | 7 | Top K Frequent Elements | Medium | Min-heap of size K by frequency | 347 |
 
-Start with 1-2 to understand basic heap operations. Problem 5 is a classic two-heap pattern. Problem 6 demonstrates heap efficiency in merging.
-
 ---
 
 ## Heap vs Other Structures
 
-| Need | Heap | Sorted Array | BST |
-|------|------|--------------|-----|
-| Insert | O(log n) | O(n) | O(log n) avg, O(n) worst |
-| Find min/max | O(1) | O(1) | O(log n) avg, O(n) worst |
-| Extract min/max | O(log n) | O(n) shift | O(log n) avg, O(n) worst |
-| Search arbitrary | O(n) | O(log n) binary search | O(log n) avg, O(n) worst |
+| Need | Heap | Sorted Array | TreeMap (BST) |
+|------|------|--------------|---------------|
+| Insert | O(log n) | O(n) | O(log n) |
+| Find min/max | O(1) | O(1) | O(log n) |
+| Extract min/max | O(log n) | O(n) shift | O(log n) |
+| Search arbitrary | O(n) | O(log n) binary search | O(log n) |
 | Space | O(n) | O(n) | O(n) |
-| Implementation | Medium (interface) | Simple | Complex (rotations for balance) |
 
 **Choose heap when:** You only care about min/max, and need efficient dynamic updates.
 
@@ -337,21 +229,21 @@ Start with 1-2 to understand basic heap operations. Problem 5 is a classic two-h
 ## Quick Reference Card
 
 ```
-Import:     import "container/heap"
-Define:     type MinHeap []int
-Methods:    Len(), Less(), Swap(), Push(), Pop()
-Min-heap:   Less: h[i] < h[j]
-Max-heap:   Less: h[i] > h[j]
-Init:       heap.Init(h)          // O(n) heapify
-Push:       heap.Push(h, val)     // O(log n)
-Pop:        val := heap.Pop(h)    // O(log n)
-Peek:       min := (*h)[0]        // O(1)
-Fix:        heap.Fix(h, i)        // O(log n) after modifying h[i]
+Import:     java.util.PriorityQueue, java.util.Collections
+
+Min-heap:   PriorityQueue<Integer> pq = new PriorityQueue<>();
+Max-heap:   PriorityQueue<Integer> pq = new PriorityQueue<>(Collections.reverseOrder());
+Custom:     PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> Integer.compare(a[0], b[0]));
+From coll:  PriorityQueue<Integer> pq = new PriorityQueue<>(list);
+
+offer:      pq.offer(val)       // O(log n) insert
+poll:       pq.poll()           // O(log n) remove and return min/max
+peek:       pq.peek()           // O(1) view min/max without removing
+size:       pq.size()
+isEmpty:    pq.isEmpty()
 
 Top K pattern:     Min-heap of size K for K largest
 Two-heap median:   Max-heap (lower) + Min-heap (upper)
 ```
 
----
-
-> **Key Insight:** Heaps give you O(1) access to the min/max and O(log n) updates. When you see "Kth largest" or "repeatedly find min/max", immediately think heap. Remember: min-heap for K largest (counterintuitive but correct).
+> **Key Insight:** Java's `PriorityQueue` is a min-heap by default. Use `Collections.reverseOrder()` for max-heap. Min-heap for K largest is counterintuitive but correct: we maintain K "candidates" and evict the smallest when a new larger element arrives.

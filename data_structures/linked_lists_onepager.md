@@ -2,18 +2,15 @@
 
 ## Core Concept
 
-A **linked list** is a linear data structure where each element (node) contains a value and a
-pointer to the next node. Unlike arrays, elements are NOT stored contiguously in memory --
-each node is independently allocated and connected through pointers.
+A **linked list** is a linear data structure where each element (node) contains a value and a pointer to the next node. Unlike arrays, elements are NOT stored contiguously in memory -- each node is independently allocated and connected through references.
 
 **Singly Linked List:** Each node points to the next node only. Traversal is one-directional.
 
-**Doubly Linked List:** Each node points to both its next and previous nodes. Allows
-bidirectional traversal but uses more memory per node.
+**Doubly Linked List:** Each node points to both its next and previous nodes. Allows bidirectional traversal but uses more memory per node.
 
-The key trade-off: linked lists give O(1) insertion and deletion at known positions (no
-shifting required), but sacrifice O(1) random access. You must traverse from the head to
-reach any arbitrary node.
+The key trade-off: linked lists give O(1) insertion and deletion at known positions (no shifting required), but sacrifice O(1) random access. You must traverse from the head to reach any arbitrary node.
+
+In Java, `java.util.LinkedList` exists but is rarely used in interviews -- you define your own `ListNode` class (same as LeetCode). `ArrayDeque` is preferred for stack/queue use cases.
 
 ---
 
@@ -23,15 +20,15 @@ reach any arbitrary node.
 |-------------------------|---------------|---------------|------------------------------------|
 | Access by index         | O(n)          | O(n)          | Must traverse from head            |
 | Search by value         | O(n)          | O(n)          | Linear scan                        |
-| Insert at head          | O(1)          | O(1)          | Update head pointer                |
-| Insert at tail          | O(1)*         | O(1)*         | *Only with a tail pointer          |
+| Insert at head          | O(1)          | O(1)          | Update head reference              |
+| Insert at tail          | O(1)*         | O(1)*         | *Only with a tail reference        |
 | Insert after given node | O(1)          | O(1)          | Pointer manipulation only          |
-| Delete head             | O(1)          | O(1)          | Update head pointer                |
-| Delete given node       | O(n) / O(1)** | O(1)         | **Singly: need prev pointer        |
+| Delete head             | O(1)          | O(1)          | Update head reference              |
+| Delete given node       | O(n) / O(1)** | O(1)          | **Singly: need prev reference      |
 | Delete by value         | O(n)          | O(n)          | Must find the node first           |
 | Get length              | O(n) / O(1)***| O(n) / O(1)***| ***O(1) if you track count         |
 
-**Space Complexity:** O(n) for n nodes, plus O(1) extra per node for pointers.
+**Space Complexity:** O(n) for n nodes, plus O(1) extra per node for references.
 
 ---
 
@@ -39,37 +36,39 @@ reach any arbitrary node.
 
 ### 1. Node Definition
 
-```go
+```java
 // Singly linked list (standard LeetCode definition)
-type ListNode struct {
-    Val  int
-    Next *ListNode
+public class ListNode {
+    int val;
+    ListNode next;
+    ListNode(int val) { this.val = val; }
 }
 
 // Doubly linked list
-type DListNode struct {
-    Val        int
-    Prev, Next *DListNode
+public class DListNode {
+    int val;
+    DListNode prev, next;
+    DListNode(int val) { this.val = val; }
 }
 ```
 
 ### 2. Dummy Head (Sentinel Node) Pattern
 
-This is the single most important linked list technique. A dummy node before the real head
-eliminates all edge cases around modifying or deleting the head node.
+This is the single most important linked list technique. A dummy node before the real head eliminates all edge cases around modifying or deleting the head node.
 
-```go
-func removeElements(head *ListNode, val int) *ListNode {
-    dummy := &ListNode{Next: head}
-    curr := dummy
-    for curr.Next != nil {
-        if curr.Next.Val == val {
-            curr.Next = curr.Next.Next  // skip/delete
+```java
+ListNode removeElements(ListNode head, int val) {
+    ListNode dummy = new ListNode(0);
+    dummy.next = head;
+    ListNode curr = dummy;
+    while (curr.next != null) {
+        if (curr.next.val == val) {
+            curr.next = curr.next.next;  // skip/delete
         } else {
-            curr = curr.Next
+            curr = curr.next;
         }
     }
-    return dummy.Next  // new head
+    return dummy.next;  // new head
 }
 ```
 
@@ -77,33 +76,31 @@ func removeElements(head *ListNode, val int) *ListNode {
 
 ### 3. Reverse a Linked List (Iterative)
 
-The most frequently tested linked list operation. Three-pointer approach: prev, curr, next.
+The most frequently tested linked list operation. Three-reference approach: prev, curr, next.
 
-```go
-func reverseList(head *ListNode) *ListNode {
-    var prev *ListNode
-    curr := head
-    for curr != nil {
-        next := curr.Next   // save next before overwriting
-        curr.Next = prev    // reverse the pointer
-        prev = curr         // advance prev
-        curr = next         // advance curr
+```java
+ListNode reverseList(ListNode head) {
+    ListNode prev = null;
+    ListNode curr = head;
+    while (curr != null) {
+        ListNode next = curr.next;  // save next before overwriting
+        curr.next = prev;           // reverse the pointer
+        prev = curr;                // advance prev
+        curr = next;                // advance curr
     }
-    return prev  // prev is the new head
+    return prev;  // prev is the new head
 }
 ```
 
 ### 4. Reverse a Linked List (Recursive)
 
-```go
-func reverseListRecursive(head *ListNode) *ListNode {
-    if head == nil || head.Next == nil {
-        return head
-    }
-    newHead := reverseListRecursive(head.Next)
-    head.Next.Next = head  // point the next node back to us
-    head.Next = nil        // remove the old forward pointer
-    return newHead
+```java
+ListNode reverseListRecursive(ListNode head) {
+    if (head == null || head.next == null) return head;
+    ListNode newHead = reverseListRecursive(head.next);
+    head.next.next = head;  // point the next node back to us
+    head.next = null;       // remove the old forward pointer
+    return newHead;
 }
 ```
 
@@ -111,72 +108,65 @@ func reverseListRecursive(head *ListNode) *ListNode {
 
 Two pointers moving at different speeds. Slow moves 1 step, fast moves 2 steps.
 
-```go
+```java
 // Find the middle node (returns first middle for even-length)
-func findMiddle(head *ListNode) *ListNode {
-    slow, fast := head, head
-    for fast.Next != nil && fast.Next.Next != nil {
-        slow = slow.Next
-        fast = fast.Next.Next
+ListNode findMiddle(ListNode head) {
+    ListNode slow = head, fast = head;
+    while (fast.next != null && fast.next.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
     }
-    return slow
+    return slow;
 }
 
 // Detect a cycle
-func hasCycle(head *ListNode) bool {
-    slow, fast := head, head
-    for fast != nil && fast.Next != nil {
-        slow = slow.Next
-        fast = fast.Next.Next
-        if slow == fast {
-            return true  // cycle detected
-        }
+boolean hasCycle(ListNode head) {
+    ListNode slow = head, fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+        if (slow == fast) return true;  // cycle detected
     }
-    return false  // no cycle
+    return false;
 }
 
 // Find the start of the cycle (Floyd's algorithm)
-func detectCycle(head *ListNode) *ListNode {
-    slow, fast := head, head
-    for fast != nil && fast.Next != nil {
-        slow = slow.Next
-        fast = fast.Next.Next
-        if slow == fast {
-            // Phase 2: find entry point
-            slow = head
-            for slow != fast {
-                slow = slow.Next
-                fast = fast.Next  // both move at speed 1 now
+ListNode detectCycle(ListNode head) {
+    ListNode slow = head, fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+        if (slow == fast) {
+            slow = head;  // Phase 2: find entry point
+            while (slow != fast) {
+                slow = slow.next;
+                fast = fast.next;  // both move at speed 1 now
             }
-            return slow
+            return slow;
         }
     }
-    return nil
+    return null;
 }
 ```
 
 ### 6. Merge Two Sorted Lists
 
-```go
-func mergeTwoLists(l1, l2 *ListNode) *ListNode {
-    dummy := &ListNode{}
-    curr := dummy
-    for l1 != nil && l2 != nil {
-        if l1.Val <= l2.Val {
-            curr.Next = l1
-            l1 = l1.Next
+```java
+ListNode mergeTwoLists(ListNode l1, ListNode l2) {
+    ListNode dummy = new ListNode(0);
+    ListNode curr = dummy;
+    while (l1 != null && l2 != null) {
+        if (l1.val <= l2.val) {
+            curr.next = l1;
+            l1 = l1.next;
         } else {
-            curr.Next = l2
-            l2 = l2.Next
+            curr.next = l2;
+            l2 = l2.next;
         }
-        curr = curr.Next
+        curr = curr.next;
     }
-    if l1 != nil {
-        curr.Next = l1
-    } else {
-        curr.Next = l2
-    }
-    return dummy.Next
+    curr.next = (l1 != null) ? l1 : l2;
+    return dummy.next;
 }
 ```
 
@@ -184,21 +174,20 @@ func mergeTwoLists(l1, l2 *ListNode) *ListNode {
 
 Use two pointers with an n-node gap.
 
-```go
-func removeNthFromEnd(head *ListNode, n int) *ListNode {
-    dummy := &ListNode{Next: head}
-    slow, fast := dummy, dummy
+```java
+ListNode removeNthFromEnd(ListNode head, int n) {
+    ListNode dummy = new ListNode(0);
+    dummy.next = head;
+    ListNode slow = dummy, fast = dummy;
     // Advance fast by n+1 steps
-    for i := 0; i <= n; i++ {
-        fast = fast.Next
+    for (int i = 0; i <= n; i++) fast = fast.next;
+    // Move both until fast hits null
+    while (fast != null) {
+        slow = slow.next;
+        fast = fast.next;
     }
-    // Move both until fast hits nil
-    for fast != nil {
-        slow = slow.Next
-        fast = fast.Next
-    }
-    slow.Next = slow.Next.Next  // remove the nth from end
-    return dummy.Next
+    slow.next = slow.next.next;  // remove the nth from end
+    return dummy.next;
 }
 ```
 
@@ -210,41 +199,32 @@ func removeNthFromEnd(head *ListNode, n int) *ListNode {
 |---------------------------------------------------|------------------|
 | Frequent insert/delete at arbitrary positions      | Yes              |
 | Need O(1) access by index                         | No -- use array  |
-| Implement a stack (push/pop at one end)            | Yes, or use slice |
-| Implement a queue (FIFO)                           | Yes (with tail pointer) |
+| Implement a stack or queue                         | Use `ArrayDeque` |
 | Build an LRU cache                                | Yes (doubly linked) |
-| Unknown size, lots of insertions                   | Yes              |
+| Unknown size, lots of insertions at head           | Yes              |
 | Need cache-friendly iteration                      | No -- use array  |
 
 ---
 
 ## Common Pitfalls
 
-1. **Losing references.** When reversing or rearranging, always save `curr.Next` in a
-   temporary variable BEFORE overwriting `curr.Next`. Once you overwrite, the old reference
-   is gone.
+1. **Losing references.** When reversing or rearranging, always save `curr.next` in a temporary variable BEFORE overwriting `curr.next`. Once you overwrite, the old reference is gone.
 
-2. **Nil pointer dereference.** Always check `node != nil` before accessing `node.Val` or
-   `node.Next`. Handle empty lists (nil head) and single-node lists as base cases.
+2. **NullPointerException.** Always check `node != null` before accessing `node.val` or `node.next`. Handle empty lists (null head) and single-node lists as base cases.
 
-3. **Not using dummy nodes.** Without a dummy head, you need special-case logic whenever the
-   head itself is being modified. The dummy node pattern eliminates this entirely.
+3. **Not using dummy nodes.** Without a dummy head, you need special-case logic whenever the head itself is being modified. The dummy node pattern eliminates this entirely.
 
 4. **Off-by-one in fast/slow pointer conditions.** For finding the middle:
-   - `for fast != nil && fast.Next != nil` -- slow lands on second middle (even length)
-   - `for fast.Next != nil && fast.Next.Next != nil` -- slow lands on first middle
+   - `while (fast != null && fast.next != null)` -- slow lands on second middle (even length)
+   - `while (fast.next != null && fast.next.next != null)` -- slow lands on first middle
 
-5. **Creating cycles accidentally.** When reordering nodes, make sure the last node's `Next`
-   is set to `nil`. Forgetting this creates an infinite loop.
+5. **Creating cycles accidentally.** When reordering nodes, make sure the last node's `next` is set to `null`. Forgetting this creates an infinite loop.
 
-6. **Confusing node deletion.** In a singly linked list, to delete a node you need a pointer
-   to the PREVIOUS node, not the node itself. The dummy head pattern helps here.
+6. **Confusing node deletion.** In a singly linked list, to delete a node you need a reference to the PREVIOUS node, not the node itself. The dummy head pattern helps here.
 
 ---
 
 ## Interview Relevance
-
-Linked list problems test your ability to manipulate pointers carefully. The core patterns:
 
 | Pattern              | Signal Words                                       | Example Problems                |
 |----------------------|----------------------------------------------------|---------------------------------|
@@ -254,9 +234,7 @@ Linked list problems test your ability to manipulate pointers carefully. The cor
 | Merge                | "sorted lists", "combine", "merge"                 | Merge Two/K Sorted Lists        |
 | In-Place Rearrange   | "reorder", "rotate", "swap pairs"                  | Reorder List, Swap Nodes        |
 
-**Interview tip:** Draw the pointer diagram on paper (or whiteboard). Trace through your
-code with a 3-4 node example before coding. Most linked list bugs come from incorrect
-pointer order, and a diagram makes them obvious.
+**Interview tip:** Draw the pointer diagram on paper (or whiteboard). Trace through your code with a 3-4 node example before coding. Most linked list bugs come from incorrect pointer order, and a diagram makes them obvious.
 
 ---
 
@@ -269,24 +247,23 @@ pointer order, and a diagram makes them obvious.
 | 3  | Linked List Cycle                | Easy       | Fast/slow pointers          | 141        |
 | 4  | Remove Nth Node From End         | Medium     | Two pointers with gap       | 19         |
 | 5  | Reorder List                     | Medium     | Find middle + reverse + merge | 143      |
-| 6  | LRU Cache                       | Medium     | Doubly linked + hash map    | 146        |
+| 6  | LRU Cache                        | Medium     | Doubly linked + hash map    | 146        |
 | 7  | Merge K Sorted Lists             | Hard       | Divide and conquer / heap   | 23         |
 
-Start with 1-3 to master the basic patterns, then 4-5 which combine multiple patterns.
-Problem 6 (LRU Cache) is a classic design question that combines linked lists with hash maps.
+Start with 1-3 to master the basic patterns, then 4-5 which combine multiple patterns. Problem 6 (LRU Cache) is a classic design question.
 
 ---
 
 ## Quick Reference Card
 
 ```
-Define:     type ListNode struct { Val int; Next *ListNode }
-Create:     node := &ListNode{Val: 42}
-Traverse:   for curr := head; curr != nil; curr = curr.Next { ... }
-Dummy:      dummy := &ListNode{Next: head}; ...; return dummy.Next
-Reverse:    prev, curr = nil, head; save next; curr.Next = prev; advance
-Middle:     slow, fast := head, head; fast moves 2x
+Define:     class ListNode { int val; ListNode next; ListNode(int val){this.val=val;} }
+Create:     ListNode node = new ListNode(42);
+Traverse:   for (ListNode curr = head; curr != null; curr = curr.next) { ... }
+Dummy:      ListNode dummy = new ListNode(0); dummy.next = head; ... return dummy.next;
+Reverse:    prev=null, curr=head; save next; curr.next=prev; advance both
+Middle:     slow, fast = head; fast moves 2x while fast.next != null && fast.next.next != null
 Cycle:      slow == fast after both start at head
-Merge:      dummy + compare l1.Val vs l2.Val, advance smaller
-Delete:     prev.Next = prev.Next.Next
+Merge:      dummy + compare l1.val vs l2.val, advance smaller
+Delete:     prev.next = prev.next.next
 ```

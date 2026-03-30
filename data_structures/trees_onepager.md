@@ -2,13 +2,11 @@
 
 ## Core Concept
 
-A **binary tree** is a hierarchical data structure where each node has at most two children,
-referred to as the **left** and **right** child. Unlike linear structures (arrays, linked lists),
-trees model hierarchical relationships and enable efficient divide-and-conquer strategies.
+A **binary tree** is a hierarchical data structure where each node has at most two children, referred to as the **left** and **right** child. Unlike linear structures (arrays, linked lists), trees model hierarchical relationships and enable efficient divide-and-conquer strategies.
 
 **Key Terminology:**
 - **Root:** The topmost node (no parent)
-- **Leaf:** A node with no children (`Left == nil && Right == nil`)
+- **Leaf:** A node with no children (`left == null && right == null`)
 - **Height:** Longest path from root to any leaf (root-only tree has height 1)
 - **Depth:** Distance from the root to a given node (root has depth 0)
 - **Subtree:** A node and all its descendants
@@ -17,9 +15,7 @@ trees model hierarchical relationships and enable efficient divide-and-conquer s
 - **Perfect tree:** All leaves at the same depth, all internal nodes have 2 children
 - **Balanced tree:** Height difference between left and right subtrees is at most 1 (for every node)
 
-**The fundamental insight for tree problems:** Most solutions follow a recursive pattern --
-solve the problem for the left subtree, solve for the right subtree, then combine the results
-at the current node. Think: "What information do I need from my children?"
+**The fundamental insight for tree problems:** Most solutions follow a recursive pattern -- solve the problem for the left subtree, solve for the right subtree, then combine the results at the current node. Think: "What information do I need from my children?"
 
 ---
 
@@ -33,11 +29,11 @@ at the current node. Think: "What information do I need from my children?"
 | Insert                 | O(n)                | O(log n)      | Find position first            |
 | Delete                 | O(n)                | O(log n)      | Find + restructure             |
 | Height                 | O(n)                | O(n)          | Recursive DFS                  |
-| Count nodes            | O(n)                | O(n)*         | *O(log^2 n) for complete trees |
+| Count nodes            | O(n)                | O(n)*         | *O(log² n) for complete trees  |
 | Find min/max           | O(n)                | O(log n)      | BST: go leftmost/rightmost     |
 
 **Space Complexity for Traversals:**
-- DFS (recursive): O(h) where h = height of tree. O(n) worst case (skewed), O(log n) balanced.
+- DFS (recursive): O(h) where h = height. O(n) worst case (skewed), O(log n) balanced.
 - BFS (queue): O(w) where w = maximum width of tree. Up to O(n/2) = O(n) for complete tree.
 
 ---
@@ -46,11 +42,11 @@ at the current node. Think: "What information do I need from my children?"
 
 ### 1. Node Definition
 
-```go
-type TreeNode struct {
-    Val   int
-    Left  *TreeNode
-    Right *TreeNode
+```java
+public class TreeNode {
+    int val;
+    TreeNode left, right;
+    TreeNode(int val) { this.val = val; }
 }
 ```
 
@@ -58,72 +54,59 @@ type TreeNode struct {
 
 The three traversals differ only in when you process the current node relative to its children.
 
-```go
+```java
 // Preorder: Root -> Left -> Right
 // Use: Serialize/copy a tree, prefix expression evaluation
-func preorder(root *TreeNode, result *[]int) {
-    if root == nil {
-        return
-    }
-    *result = append(*result, root.Val)  // process BEFORE children
-    preorder(root.Left, result)
-    preorder(root.Right, result)
+void preorder(TreeNode root, List<Integer> result) {
+    if (root == null) return;
+    result.add(root.val);           // process BEFORE children
+    preorder(root.left, result);
+    preorder(root.right, result);
 }
 
 // Inorder: Left -> Root -> Right
 // Use: BST sorted output, expression trees
-func inorder(root *TreeNode, result *[]int) {
-    if root == nil {
-        return
-    }
-    inorder(root.Left, result)
-    *result = append(*result, root.Val)  // process BETWEEN children
-    inorder(root.Right, result)
+void inorder(TreeNode root, List<Integer> result) {
+    if (root == null) return;
+    inorder(root.left, result);
+    result.add(root.val);           // process BETWEEN children
+    inorder(root.right, result);
 }
 
 // Postorder: Left -> Right -> Root
 // Use: Delete tree, evaluate expression, calculate size/height
-func postorder(root *TreeNode, result *[]int) {
-    if root == nil {
-        return
-    }
-    postorder(root.Left, result)
-    postorder(root.Right, result)
-    *result = append(*result, root.Val)  // process AFTER children
+void postorder(TreeNode root, List<Integer> result) {
+    if (root == null) return;
+    postorder(root.left, result);
+    postorder(root.right, result);
+    result.add(root.val);           // process AFTER children
 }
 ```
 
 ### 3. BFS / Level-Order Traversal
 
-Process nodes level by level using a queue.
+Process nodes level by level using a queue (`ArrayDeque` is preferred over `LinkedList`).
 
-```go
-func levelOrder(root *TreeNode) [][]int {
-    if root == nil {
-        return nil
-    }
-    result := [][]int{}
-    queue := []*TreeNode{root}
+```java
+List<List<Integer>> levelOrder(TreeNode root) {
+    List<List<Integer>> result = new ArrayList<>();
+    if (root == null) return result;
+    Queue<TreeNode> queue = new ArrayDeque<>();
+    queue.offer(root);
 
-    for len(queue) > 0 {
-        levelSize := len(queue)  // nodes in current level
-        level := make([]int, 0, levelSize)
+    while (!queue.isEmpty()) {
+        int levelSize = queue.size();  // nodes in current level
+        List<Integer> level = new ArrayList<>();
 
-        for i := 0; i < levelSize; i++ {
-            node := queue[0]
-            queue = queue[1:]
-            level = append(level, node.Val)
-
-            if node.Left != nil {
-                queue = append(queue, node.Left)
-            }
-            if node.Right != nil {
-                queue = append(queue, node.Right)
-            }
+        for (int i = 0; i < levelSize; i++) {
+            TreeNode node = queue.poll();
+            level.add(node.val);
+            if (node.left != null) queue.offer(node.left);
+            if (node.right != null) queue.offer(node.right);
         }
-        result = append(result, level)
+        result.add(level);
     }
-    return result
+    return result;
 }
 ```
 
@@ -131,17 +114,10 @@ func levelOrder(root *TreeNode) [][]int {
 
 The classic recursive pattern: get info from children, combine.
 
-```go
-func maxDepth(root *TreeNode) int {
-    if root == nil {
-        return 0
-    }
-    leftDepth := maxDepth(root.Left)
-    rightDepth := maxDepth(root.Right)
-    if leftDepth > rightDepth {
-        return leftDepth + 1
-    }
-    return rightDepth + 1
+```java
+int maxDepth(TreeNode root) {
+    if (root == null) return 0;
+    return Math.max(maxDepth(root.left), maxDepth(root.right)) + 1;
 }
 ```
 
@@ -149,108 +125,75 @@ func maxDepth(root *TreeNode) int {
 
 Swap left and right children at every node.
 
-```go
-func invertTree(root *TreeNode) *TreeNode {
-    if root == nil {
-        return nil
-    }
-    root.Left, root.Right = root.Right, root.Left
-    invertTree(root.Left)
-    invertTree(root.Right)
-    return root
+```java
+TreeNode invertTree(TreeNode root) {
+    if (root == null) return null;
+    TreeNode tmp = root.left;
+    root.left = root.right;
+    root.right = tmp;
+    invertTree(root.left);
+    invertTree(root.right);
+    return root;
 }
 ```
 
 ### 6. Diameter of Binary Tree
 
-The diameter is the longest path between any two nodes (measured in edges). It may or may
-not pass through the root. Track it as a side effect during height computation.
+The diameter is the longest path between any two nodes (in edges). It may or may not pass through the root. Track it as a side effect during height computation.
 
-```go
-func diameterOfBinaryTree(root *TreeNode) int {
-    diameter := 0
+```java
+int diameter = 0;
 
-    var height func(node *TreeNode) int
-    height = func(node *TreeNode) int {
-        if node == nil {
-            return 0
-        }
-        left := height(node.Left)
-        right := height(node.Right)
+int diameterOfBinaryTree(TreeNode root) {
+    diameter = 0;
+    height(root);
+    return diameter;
+}
 
-        // Update diameter: path through this node
-        if left+right > diameter {
-            diameter = left + right
-        }
-
-        // Return height for parent's use
-        if left > right {
-            return left + 1
-        }
-        return right + 1
-    }
-
-    height(root)
-    return diameter
+int height(TreeNode node) {
+    if (node == null) return 0;
+    int left = height(node.left);
+    int right = height(node.right);
+    diameter = Math.max(diameter, left + right);  // update global max
+    return Math.max(left, right) + 1;
 }
 ```
 
 ### 7. Check if Balanced
 
-A tree is balanced if for every node, the height difference between left and right subtrees
-is at most 1. Compute height bottom-up and return -1 as a sentinel for "unbalanced."
+A tree is balanced if for every node, the height difference between left and right subtrees is at most 1. Compute height bottom-up and return -1 as a sentinel for "unbalanced."
 
-```go
-func isBalanced(root *TreeNode) bool {
-    return checkHeight(root) != -1
+```java
+boolean isBalanced(TreeNode root) {
+    return checkHeight(root) != -1;
 }
 
-func checkHeight(root *TreeNode) int {
-    if root == nil {
-        return 0
-    }
-    left := checkHeight(root.Left)
-    if left == -1 {
-        return -1  // left subtree unbalanced
-    }
-    right := checkHeight(root.Right)
-    if right == -1 {
-        return -1  // right subtree unbalanced
-    }
-    diff := left - right
-    if diff < -1 || diff > 1 {
-        return -1  // this node is unbalanced
-    }
-    if left > right {
-        return left + 1
-    }
-    return right + 1
+int checkHeight(TreeNode root) {
+    if (root == null) return 0;
+    int left = checkHeight(root.left);
+    if (left == -1) return -1;     // left subtree unbalanced
+    int right = checkHeight(root.right);
+    if (right == -1) return -1;    // right subtree unbalanced
+    if (Math.abs(left - right) > 1) return -1;  // this node unbalanced
+    return Math.max(left, right) + 1;
 }
 ```
 
 ### 8. Same Tree / Subtree Check
 
-```go
-func isSameTree(p, q *TreeNode) bool {
-    if p == nil && q == nil {
-        return true
-    }
-    if p == nil || q == nil {
-        return false
-    }
-    return p.Val == q.Val &&
-        isSameTree(p.Left, q.Left) &&
-        isSameTree(p.Right, q.Right)
+```java
+boolean isSameTree(TreeNode p, TreeNode q) {
+    if (p == null && q == null) return true;
+    if (p == null || q == null) return false;
+    return p.val == q.val &&
+           isSameTree(p.left, q.left) &&
+           isSameTree(p.right, q.right);
 }
 
-func isSubtree(root, subRoot *TreeNode) bool {
-    if root == nil {
-        return false
-    }
-    if isSameTree(root, subRoot) {
-        return true
-    }
-    return isSubtree(root.Left, subRoot) || isSubtree(root.Right, subRoot)
+boolean isSubtree(TreeNode root, TreeNode subRoot) {
+    if (root == null) return false;
+    if (isSameTree(root, subRoot)) return true;
+    return isSubtree(root.left, subRoot) || isSubtree(root.right, subRoot);
 }
 ```
 
@@ -258,29 +201,22 @@ func isSubtree(root, subRoot *TreeNode) bool {
 
 When recursion depth might cause stack overflow, or when you need explicit control.
 
-```go
-// Iterative preorder
-func preorderIterative(root *TreeNode) []int {
-    if root == nil {
-        return nil
-    }
-    result := []int{}
-    stack := []*TreeNode{root}
+```java
+// Iterative preorder using Deque as a stack
+List<Integer> preorderIterative(TreeNode root) {
+    List<Integer> result = new ArrayList<>();
+    if (root == null) return result;
+    Deque<TreeNode> stack = new ArrayDeque<>();
+    stack.push(root);
 
-    for len(stack) > 0 {
-        node := stack[len(stack)-1]
-        stack = stack[:len(stack)-1]
-        result = append(result, node.Val)
-
+    while (!stack.isEmpty()) {
+        TreeNode node = stack.pop();
+        result.add(node.val);
         // Push right first so left is processed first (LIFO)
-        if node.Right != nil {
-            stack = append(stack, node.Right)
-        }
-        if node.Left != nil {
-            stack = append(stack, node.Left)
-        }
+        if (node.right != null) stack.push(node.right);
+        if (node.left != null) stack.push(node.left);
     }
-    return result
+    return result;
 }
 ```
 
@@ -297,93 +233,65 @@ func preorderIterative(root *TreeNode) []int {
 | Space in balanced tree           | O(log n)                      | O(n) (widest level)           |
 | Space in skewed tree             | O(n)                          | O(1)                          |
 | Validate BST                     | Natural (inorder)             | Not typical                   |
-| Serialize/deserialize            | Both work                     | Both work                     |
 
-**Rule of thumb:** If the problem involves path properties, depth, or subtree comparison, use
-DFS. If it involves level-based processing or shortest distance, use BFS.
+**Rule of thumb:** If the problem involves path properties, depth, or subtree comparison, use DFS. If it involves level-based processing or shortest distance, use BFS.
 
 ---
 
 ## Common Recursive Patterns
 
-Most tree problems follow one of these templates:
-
 **Pattern 1: Return a value (bottom-up)**
-```go
-func solve(root *TreeNode) int {
-    if root == nil { return baseCase }
-    left := solve(root.Left)
-    right := solve(root.Right)
-    return combine(left, right, root.Val)
+```java
+int solve(TreeNode root) {
+    if (root == null) return baseCase;
+    int left = solve(root.left);
+    int right = solve(root.right);
+    return combine(left, right, root.val);
 }
 ```
 Examples: max depth, height, count nodes, is balanced.
 
 **Pattern 2: Pass information down (top-down)**
-```go
-func solve(root *TreeNode, parentInfo int) {
-    if root == nil { return }
-    // use parentInfo with root.Val
-    solve(root.Left, updatedInfo)
-    solve(root.Right, updatedInfo)
+```java
+void solve(TreeNode root, int parentInfo) {
+    if (root == null) return;
+    // use parentInfo with root.val
+    solve(root.left, updatedInfo);
+    solve(root.right, updatedInfo);
 }
 ```
 Examples: path sum, validate BST with min/max bounds.
 
 **Pattern 3: Track global state (side effect)**
-```go
-var globalResult int
-func solve(root *TreeNode) int {
-    if root == nil { return 0 }
-    left := solve(root.Left)
-    right := solve(root.Right)
-    globalResult = max(globalResult, left + right + root.Val)  // side effect
-    return max(left, right) + root.Val                         // return value
+```java
+int globalResult = 0;
+int solve(TreeNode root) {
+    if (root == null) return 0;
+    int left = solve(root.left);
+    int right = solve(root.right);
+    globalResult = Math.max(globalResult, left + right + root.val);  // side effect
+    return Math.max(left, right) + root.val;                         // return value
 }
 ```
 Examples: diameter, max path sum.
 
 ---
 
-## When to Use
-
-| Scenario                                        | Use Binary Tree? |
-|-------------------------------------------------|------------------|
-| Hierarchical data (org chart, file system)      | Yes              |
-| Need efficient search/insert/delete             | Use BST variant  |
-| Priority-based access                           | Use heap         |
-| Need O(1) lookup by key                         | No -- use hash map |
-| Sequential data                                 | No -- use array/list |
-| Expression parsing                              | Yes (expression tree) |
-
----
-
 ## Common Pitfalls
 
-1. **Forgetting the nil base case.** Every recursive tree function must handle `root == nil`.
-   This is the termination condition.
+1. **Forgetting the null base case.** Every recursive tree function must handle `root == null`. This is the termination condition.
 
-2. **Confusing height vs depth.** Height is measured from the bottom (leaf = 0 or 1 depending
-   on convention). Depth is measured from the top (root = 0). Different problems use different
-   conventions -- read carefully.
+2. **Confusing height vs depth.** Height is measured from the bottom (leaf = 0 or 1 depending on convention). Depth is measured from the top (root = 0). Read problems carefully.
 
-3. **Returning wrong type from recursion.** If the function returns a value, make sure you
-   use it. A common bug: calling `solve(root.Left)` without storing the result.
+3. **Returning wrong type from recursion.** If the function returns a value, make sure you use it. A common bug: calling `solve(root.left)` without storing the result.
 
-4. **Stack overflow on deep trees.** Recursive DFS uses O(h) call stack. For trees with
-   depth 10^5+, use iterative DFS with an explicit stack.
+4. **Stack overflow on deep trees.** Recursive DFS uses O(h) call stack. For trees with depth 10^5+, use iterative DFS with an explicit `Deque`.
 
-5. **Modifying the tree unintentionally.** When problems ask you to check a property, do not
-   modify node values or structure. Use separate variables.
-
-6. **Ignoring the difference between DFS and BFS space complexity.** For a wide, balanced
-   tree, DFS uses O(log n) space while BFS uses O(n). For a deep, narrow tree, it is reversed.
+5. **Not using `ArrayDeque` for BFS.** Don't use `new LinkedList<>()` for queues -- `ArrayDeque` is faster. Both implement `Queue`.
 
 ---
 
 ## Interview Relevance
-
-Binary tree problems are a staple of coding interviews. Pattern mapping:
 
 | Pattern                  | Signal Words                                      | Example Problems                   |
 |--------------------------|---------------------------------------------------|------------------------------------|
@@ -393,9 +301,6 @@ Binary tree problems are a staple of coding interviews. Pattern mapping:
 | Top-Down Passing         | "path sum", "validate", "boundaries"                | Path Sum, Validate BST             |
 | Tree Construction        | "build", "construct", "from traversal"              | Build from Preorder + Inorder      |
 | Serialize/Deserialize    | "encode", "decode", "serialize"                     | Serialize and Deserialize          |
-
-**Interview tip:** When you see a tree problem, immediately ask: "Can I solve this by
-recursively solving for left and right subtrees?" For ~80% of tree problems, the answer is yes.
 
 ---
 
@@ -412,10 +317,6 @@ recursively solving for left and right subtrees?" For ~80% of tree problems, the
 | 7  | Binary Tree Level Order Traversal    | Medium     | BFS with queue                 | 102        |
 | 8  | Binary Tree Right Side View          | Medium     | BFS last-in-level              | 199        |
 | 9  | Binary Tree Maximum Path Sum         | Hard       | DFS + global max tracking      | 124        |
-
-Start with 1-4 to build recursive intuition. Problems 5-6 introduce the "compute height
-with side effects" pattern. Problems 7-8 cover BFS. Problem 9 is a harder variant of the
-diameter pattern.
 
 ---
 
@@ -437,13 +338,12 @@ Level-order:                    [[1], [2, 3], [4, 5, 6, 7]]
 ## Quick Reference Card
 
 ```
-Define:     type TreeNode struct { Val int; Left, Right *TreeNode }
-Create:     node := &TreeNode{Val: 1, Left: leftChild, Right: rightChild}
-Nil check:  if root == nil { return }
-Height:     max(height(left), height(right)) + 1
-Leaf:       root.Left == nil && root.Right == nil
-DFS:        Recursion or explicit stack
-BFS:        Queue with level-size loop
+Define:     class TreeNode { int val; TreeNode left, right; TreeNode(int v){val=v;} }
+Null check: if (root == null) return;
+Height:     Math.max(height(left), height(right)) + 1
+Leaf:       root.left == null && root.right == null
+DFS:        Recursion or Deque as explicit stack
+BFS:        Queue<TreeNode> q = new ArrayDeque<>(); q.offer(root); q.poll()
 Preorder:   process -> left -> right
 Inorder:    left -> process -> right
 Postorder:  left -> right -> process

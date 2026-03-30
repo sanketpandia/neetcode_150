@@ -2,270 +2,241 @@
 
 ## Core Concept
 
-In Go, a **string** is an immutable, read-only sequence of bytes. Strings are UTF-8 encoded
-by default, which means a single visible character can occupy 1 to 4 bytes. This distinction
-between **bytes** and **runes** (Unicode code points) is fundamental to working with Go strings
-correctly.
+In Java, a **String** is an immutable sequence of `char` values (UTF-16 encoded). You cannot modify individual characters in a String -- any "modification" creates a new String. This has critical performance implications: naive string concatenation in a loop is O(n²) because each `+` allocates and copies a new String.
 
-A string header contains two fields:
-- **Pointer** to the underlying byte array
-- **Length** (in bytes, not characters)
+The key types:
+- **`String`** -- immutable, safe to share, use for constant text
+- **`StringBuilder`** -- mutable, O(1) amortized append, use when building strings
+- **`char`** -- primitive 16-bit Unicode code unit (use `s.charAt(i)`, not `s[i]`)
 
-**Immutability** means you cannot modify individual characters in a string. Any "modification"
-creates a new string. This has critical performance implications: naive string concatenation
-in a loop is O(n^2) because each concatenation allocates and copies a new string.
-
-For coding interviews, most problems use ASCII-only input, so bytes and runes are equivalent
-(1 byte = 1 character). But understanding the distinction makes you a stronger Go programmer.
+For most interview problems, input is lowercase ASCII (`'a'-'z'`), so a `char` maps 1-to-1 to a character. Character arithmetic works: `ch - 'a'` gives an index 0–25.
 
 ---
 
 ## Time Complexity Table
 
-| Operation                 | Time Complexity | Notes                                      |
-|---------------------------|------------------|--------------------------------------------|
-| Access byte by index      | O(1)             | `s[i]` returns a `byte`                    |
-| Access rune by index      | O(n)             | Must iterate from start (variable width)   |
-| Iterate by byte           | O(n)             | `for i := 0; i < len(s); i++`             |
-| Iterate by rune           | O(n)             | `for _, r := range s`                      |
-| Concatenation (`+`)       | O(n + m)         | Creates entirely new string                |
-| Substring / slice         | O(1)             | `s[low:high]` shares backing memory        |
-| Length (bytes)             | O(1)             | `len(s)`                                   |
-| Length (runes)             | O(n)             | `utf8.RuneCountInString(s)`                |
-| Comparison (`==`)          | O(n)             | Byte-by-byte comparison                    |
-| `strings.Contains`        | O(n * m)         | Naive search; n = haystack, m = needle     |
-| `strings.Builder.Write`   | O(1) amortized   | Like slice append                          |
-| `strings.Builder.String`  | O(1)             | Returns string without copy (Go 1.10+)     |
+| Operation                    | Time Complexity  | Notes                                              |
+|------------------------------|------------------|----------------------------------------------------|
+| Access char by index         | O(1)             | `s.charAt(i)` -- no boxing                        |
+| Length                       | O(1)             | `s.length()`                                       |
+| Concatenation (`+`)          | O(n + m)         | Creates a new String -- avoid in loops             |
+| `StringBuilder.append`       | O(1) amortized   | Backed by resizable char array                     |
+| `StringBuilder.toString`     | O(n)             | Copies internal buffer into a new String           |
+| Substring                    | O(n)             | `s.substring(from, to)` copies characters (Java 7+)|
+| Comparison (`equals`)        | O(n)             | Never use `==` for String equality                 |
+| `contains` / `indexOf`       | O(n * m)         | n = haystack length, m = needle length             |
+| `toCharArray`                | O(n)             | Copies all chars into a new array                  |
 
 ---
 
 ## Implementation Patterns
 
-### 1. String Basics in Go
+### 1. String Basics in Java
 
-```go
-s := "hello"
-fmt.Println(len(s))     // 5 -- byte count
-fmt.Println(s[0])       // 104 -- byte value of 'h'
-fmt.Println(string(s[0])) // "h" -- convert byte to string
+```java
+String s = "hello";
+int len = s.length();           // 5
+char c = s.charAt(0);           // 'h'
+String sub = s.substring(1, 4); // "ell" -- [1, 4) exclusive end
 
-// Strings are immutable
-// s[0] = 'H'  // COMPILE ERROR
+// Strings are immutable -- this is a NEW string:
+String upper = s.toUpperCase();
 
-// Substring (shares backing memory, O(1))
-sub := s[1:4]  // "ell"
+// ALWAYS use .equals() for comparison, not ==
+String a = "foo", b = "foo";
+a == b;         // unreliable (reference comparison)
+a.equals(b);    // true (content comparison)
 ```
 
-### 2. Byte vs Rune Iteration
+### 2. Efficient String Building
 
-```go
-s := "cafe\u0301"  // "cafe" + combining acute accent = "cafe" visually
-
-// Byte iteration -- may split multi-byte characters
-for i := 0; i < len(s); i++ {
-    fmt.Printf("%d: %c\n", i, s[i])
+```java
+// BAD: O(n^2) -- creates a new String on every iteration
+String result = "";
+for (int i = 0; i < 1000; i++) {
+    result += "a";  // allocates and copies every time
 }
 
-// Rune iteration -- handles multi-byte correctly
-for i, r := range s {
-    fmt.Printf("%d: %c (U+%04X)\n", i, r, r)
+// GOOD: O(n) -- amortized O(1) per append
+StringBuilder sb = new StringBuilder();
+for (int i = 0; i < 1000; i++) {
+    sb.append('a');
 }
+String result = sb.toString();
 ```
 
-### 3. Efficient String Building
+### 3. Mutable String Operations via char[]
 
-```go
-// BAD: O(n^2) -- creates a new string each iteration
-result := ""
-for i := 0; i < 1000; i++ {
-    result += "a"  // allocates and copies every time
-}
+```java
+// Convert to char array for in-place mutation
+char[] chars = s.toCharArray();   // O(n) copy
+chars[0] = 'H';
+String modified = new String(chars);  // O(n) copy back
 
-// GOOD: O(n) -- amortized O(1) per write
-var b strings.Builder
-b.Grow(1000)  // optional: pre-allocate capacity
-for i := 0; i < 1000; i++ {
-    b.WriteByte('a')
+// Reverse a string
+char[] arr = s.toCharArray();
+int left = 0, right = arr.length - 1;
+while (left < right) {
+    char tmp = arr[left];
+    arr[left++] = arr[right];
+    arr[right--] = tmp;
 }
-result := b.String()
+String reversed = new String(arr);
 ```
 
-### 4. Mutable String Operations via Byte/Rune Slice
-
-```go
-// Convert to byte slice for ASCII mutation
-bs := []byte(s)          // O(n) copy
-bs[0] = 'H'
-s = string(bs)           // O(n) copy back
-
-// Convert to rune slice for Unicode-safe mutation
-rs := []rune(s)          // O(n) copy
-rs[0] = 'H'
-s = string(rs)           // O(n) copy back
-```
-
-### 5. Character Frequency Counting
+### 4. Character Frequency Counting
 
 The foundational pattern for anagram, permutation, and substring problems.
 
-```go
-// Using an array (faster, for lowercase ASCII)
-func charFreq(s string) [26]int {
-    var freq [26]int
-    for _, ch := range s {
-        freq[ch-'a']++
+```java
+// Array approach (faster, for lowercase ASCII a-z)
+int[] freq(String s) {
+    int[] freq = new int[26];
+    for (char c : s.toCharArray()) {
+        freq[c - 'a']++;
     }
-    return freq
+    return freq;
 }
 
-// Using a map (flexible, for any character set)
-func charFreqMap(s string) map[rune]int {
-    freq := make(map[rune]int)
-    for _, ch := range s {
-        freq[ch]++
+// Map approach (flexible, any character set)
+Map<Character, Integer> freqMap(String s) {
+    Map<Character, Integer> freq = new HashMap<>();
+    for (char c : s.toCharArray()) {
+        freq.merge(c, 1, Integer::sum);  // or: freq.put(c, freq.getOrDefault(c, 0) + 1)
     }
-    return freq
+    return freq;
 }
 
 // Check if two strings are anagrams
-func isAnagram(s, t string) bool {
-    if len(s) != len(t) {
-        return false
-    }
-    return charFreq(s) == charFreq(t)  // arrays are comparable in Go
+boolean isAnagram(String s, String t) {
+    if (s.length() != t.length()) return false;
+    int[] freq = new int[26];
+    for (char c : s.toCharArray()) freq[c - 'a']++;
+    for (char c : t.toCharArray()) freq[c - 'a']--;
+    for (int f : freq) if (f != 0) return false;
+    return true;
 }
 ```
 
-### 6. Two-Pointer Palindrome Check
+### 5. Two-Pointer Palindrome Check
 
-```go
-func isPalindrome(s string) bool {
-    left, right := 0, len(s)-1
-    for left < right {
-        if s[left] != s[right] {
-            return false
-        }
-        left++
-        right--
+```java
+boolean isPalindrome(String s) {
+    int left = 0, right = s.length() - 1;
+    while (left < right) {
+        if (s.charAt(left) != s.charAt(right)) return false;
+        left++;
+        right--;
     }
-    return true
+    return true;
 }
 ```
 
-### 7. Sliding Window on Strings
+### 6. Sliding Window on Strings
 
-```go
+```java
 // Longest substring without repeating characters
-func lengthOfLongestSubstring(s string) int {
-    seen := make(map[byte]int)  // char -> last seen index
-    maxLen := 0
-    left := 0
-    for right := 0; right < len(s); right++ {
-        ch := s[right]
-        if idx, ok := seen[ch]; ok && idx >= left {
-            left = idx + 1  // shrink window past the duplicate
+int lengthOfLongestSubstring(String s) {
+    Map<Character, Integer> seen = new HashMap<>(); // char -> last seen index
+    int maxLen = 0, left = 0;
+    for (int right = 0; right < s.length(); right++) {
+        char c = s.charAt(right);
+        if (seen.containsKey(c) && seen.get(c) >= left) {
+            left = seen.get(c) + 1;  // shrink window past duplicate
         }
-        seen[ch] = right
-        if right-left+1 > maxLen {
-            maxLen = right - left + 1
-        }
+        seen.put(c, right);
+        maxLen = Math.max(maxLen, right - left + 1);
     }
-    return maxLen
+    return maxLen;
 }
 ```
 
-### 8. Expand Around Center (Palindromic Substrings)
+### 7. Expand Around Center (Palindromic Substrings)
 
-```go
-// Count all palindromic substrings
-func countSubstrings(s string) int {
-    count := 0
-    for center := 0; center < len(s); center++ {
-        // Odd-length palindromes
-        count += expandCount(s, center, center)
-        // Even-length palindromes
-        count += expandCount(s, center, center+1)
+```java
+int countSubstrings(String s) {
+    int count = 0;
+    for (int center = 0; center < s.length(); center++) {
+        count += expand(s, center, center);      // odd-length
+        count += expand(s, center, center + 1);  // even-length
     }
-    return count
+    return count;
 }
 
-func expandCount(s string, left, right int) int {
-    count := 0
-    for left >= 0 && right < len(s) && s[left] == s[right] {
-        count++
-        left--
-        right++
+int expand(String s, int left, int right) {
+    int count = 0;
+    while (left >= 0 && right < s.length() && s.charAt(left) == s.charAt(right)) {
+        count++;
+        left--;
+        right++;
     }
-    return count
+    return count;
 }
 ```
 
 ---
 
-## Essential Standard Library Functions
+## Essential Standard Library Methods
 
-```go
-import "strings"
+```java
+// String methods
+s.length()                      // length
+s.charAt(i)                     // char at index
+s.substring(from, to)           // [from, to) exclusive end
+s.indexOf("sub")                // first occurrence (-1 if not found)
+s.contains("sub")               // boolean
+s.startsWith("pre")             // boolean
+s.endsWith("suf")               // boolean
+s.toLowerCase() / toUpperCase() // new String
+s.trim()                        // strip leading/trailing whitespace
+s.replace("old", "new")         // replace all occurrences
+s.split(",")                    // returns String[]
+String.join(",", list)          // join collection
+s.toCharArray()                 // char[]
+s.equals(other)                 // content equality (NOT ==)
+s.compareTo(other)              // lexicographic comparison
 
-strings.Contains(s, "sub")           // substring check
-strings.HasPrefix(s, "pre")          // starts with
-strings.HasSuffix(s, "suf")          // ends with
-strings.Index(s, "sub")             // first occurrence index (-1 if not found)
-strings.Split(s, ",")               // split into slice
-strings.Join(slice, ",")            // join slice into string
-strings.ToLower(s)                  // lowercase
-strings.ToUpper(s)                  // uppercase
-strings.TrimSpace(s)                // trim leading/trailing whitespace
-strings.Replace(s, "old", "new", n) // replace first n occurrences (-1 for all)
-strings.Repeat(s, n)                // repeat string n times
-strings.Map(func(r rune) rune {...}, s)  // transform each rune
-
-import "strconv"
-strconv.Itoa(42)                    // int to string: "42"
-strconv.Atoi("42")                  // string to int: 42, err
+// Conversions
+String.valueOf(42)              // int to String: "42"
+Integer.parseInt("42")          // String to int: 42
+Character.isLetter(c)           // true if letter
+Character.isDigit(c)            // true if digit
+Character.toLowerCase(c)        // lowercase char
 ```
 
 ---
 
 ## When to Use
 
-| Scenario                                         | Approach                         |
-|--------------------------------------------------|----------------------------------|
-| Need to modify individual characters              | Convert to `[]byte` or `[]rune` |
-| Building a string incrementally                   | `strings.Builder`               |
-| Character frequency analysis                      | `[26]int` array or `map[rune]int` |
-| Substring search/matching                          | Sliding window or two pointers  |
-| Palindrome problems                                | Two pointers or expand from center |
-| Anagram problems                                  | Frequency array comparison       |
-| String needs to be a map key                       | Strings work directly as map keys |
+| Scenario                                         | Approach                              |
+|--------------------------------------------------|---------------------------------------|
+| Need to modify individual characters              | Convert to `char[]`, modify, convert back |
+| Building a string incrementally                   | `StringBuilder`                       |
+| Character frequency analysis                      | `int[26]` for a-z, `Map<Character, Integer>` for arbitrary |
+| Substring search/matching                          | Sliding window or two pointers        |
+| Palindrome problems                                | Two pointers or expand from center    |
+| Anagram problems                                  | Frequency array comparison            |
+| Need string as a map key                          | Strings work directly as map keys     |
 
 ---
 
 ## Common Pitfalls
 
-1. **Concatenation in a loop.** `s += "x"` in a loop is O(n^2). Always use `strings.Builder`
-   for iterative string construction.
+1. **Concatenation in a loop.** `result += "x"` in a loop is O(n²). Always use `StringBuilder` for iterative string construction.
 
-2. **Byte vs rune confusion.** `s[i]` returns a `byte`, not a character. For multi-byte
-   Unicode characters, this gives you a partial byte. Use `range` to iterate by rune.
+2. **Using `==` to compare Strings.** `==` compares references, not content. Use `.equals()` always.
 
-3. **`len(s)` returns byte count, not character count.** For `"cafe"` with an accent mark,
-   `len(s)` may be 6 while there are only 5 runes.
+3. **`s.substring(from, to)` is O(n) in Java 7+.** Unlike Go, Java substrings copy the underlying array (changed in Java 7u6 to avoid memory leaks). Don't assume it's O(1).
 
-4. **Comparing with `==` is O(n).** String comparison is not constant time. For frequent
-   comparisons, consider hashing.
+4. **`s.charAt(i)` returns `char`, not `int`.** Be careful when doing arithmetic: cast explicitly if needed, or compare with character literals (`'a'`, `'z'`).
 
-5. **Forgetting that `[]byte(s)` and `string(bs)` both copy.** Converting between string and
-   byte slice creates a copy each time. Minimize conversions in hot loops.
+5. **`Arrays.asList()` with `String[]` is fixed-size.** Wrap in `new ArrayList<>()` for a mutable list.
 
-6. **Assuming ASCII.** Interview problems usually specify "lowercase English letters", but
-   always confirm. If the input can contain Unicode, use rune-based operations.
+6. **`String.split()` uses regex.** `s.split(".")` splits on nothing (`.` is regex wildcard). Use `s.split("\\.")` to split on a literal dot.
 
 ---
 
 ## Interview Relevance
-
-String problems are ubiquitous in coding interviews. Key pattern mapping:
 
 | Pattern                  | Signal Words                                        | Example Problems                    |
 |--------------------------|-----------------------------------------------------|-------------------------------------|
@@ -297,15 +268,13 @@ Start with 1-2 for basics, 3-5 for core interview patterns, and 6-7 for harder c
 ## Quick Reference Card
 
 ```
-Length:       len(s)                          // bytes
-Rune count:  utf8.RuneCountInString(s)       // characters
-Index byte:  s[i]                            // returns byte
-Iterate:     for _, r := range s { ... }     // by rune
-Substring:   s[low:high]                     // half-open interval
-Build:       var b strings.Builder; b.WriteString("x"); b.String()
-To bytes:    bs := []byte(s)                 // mutable copy
-To runes:    rs := []rune(s)                 // Unicode-safe copy
-To string:   string(bs) or string(rs)        // copy back
-Frequency:   var freq [26]int; freq[ch-'a']++
-Compare:     s1 == s2                        // O(n)
+Length:       s.length()
+Access:       s.charAt(i)                      // returns char
+Substring:    s.substring(from, to)            // [from, to) exclusive end -- O(n) copy
+Compare:      s.equals(other)                  // NEVER use ==
+Build:        StringBuilder sb = new StringBuilder(); sb.append("x"); sb.toString()
+To chars:     char[] arr = s.toCharArray()     // mutable copy
+From chars:   new String(arr)
+Frequency:    int[] freq = new int[26]; freq[c - 'a']++
+Int↔String:   String.valueOf(n) / Integer.parseInt(s)
 ```
